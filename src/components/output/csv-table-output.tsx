@@ -1,0 +1,302 @@
+import {
+	type ColumnDef,
+	flexRender,
+	getCoreRowModel,
+	getFilteredRowModel,
+	getPaginationRowModel,
+	getSortedRowModel,
+	type SortingState,
+	useReactTable,
+} from "@tanstack/react-table";
+import { ArrowUpDown, Download } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+	Pagination,
+	PaginationContent,
+	PaginationItem,
+	PaginationLink,
+	PaginationNext,
+	PaginationPrevious,
+} from "@/components/ui/pagination";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table";
+import { jsonToCsv } from "@/lib/output/csv";
+
+interface CsvTableOutputProps {
+	data: object[];
+	currentPage: number;
+	pageSize: number;
+	onPageChange: (page: number) => void;
+	onPageSizeChange: (pageSize: number) => void;
+}
+
+export function CsvTableOutput({
+	data,
+	currentPage,
+	pageSize,
+	onPageChange,
+	onPageSizeChange,
+}: CsvTableOutputProps) {
+	const [sorting, setSorting] = useState<SortingState>([]);
+	const [globalFilter, setGlobalFilter] = useState("");
+
+	const columns = useMemo<ColumnDef<Record<string, unknown>>[]>(() => {
+		if (data.length === 0) return [];
+		const keys = Object.keys(data[0]);
+		return keys.map((key) => ({
+			accessorKey: key,
+			header: ({ column }) => {
+				return (
+					<Button
+						variant="ghost"
+						onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+						className="h-8 px-2"
+					>
+						{key}
+						<ArrowUpDown className="ml-2 h-3 w-3" />
+					</Button>
+				);
+			},
+			cell: (info) => {
+				const value = info.getValue();
+				return value !== undefined && value !== null ? String(value) : "";
+			},
+		}));
+	}, [data]);
+
+	const table = useReactTable({
+		data,
+		columns,
+		getCoreRowModel: getCoreRowModel(),
+		getSortedRowModel: getSortedRowModel(),
+		getFilteredRowModel: getFilteredRowModel(),
+		getPaginationRowModel: getPaginationRowModel(),
+		onSortingChange: setSorting,
+		onGlobalFilterChange: setGlobalFilter,
+		manualPagination: true,
+		pageCount: Math.ceil(data.length / pageSize),
+		state: {
+			sorting,
+			globalFilter,
+			pagination: {
+				pageIndex: currentPage - 1,
+				pageSize,
+			},
+		},
+	});
+
+	// Update table pagination when props change
+	useMemo(() => {
+		table.setPageIndex(currentPage - 1);
+		table.setPageSize(pageSize);
+	}, [currentPage, pageSize, table]);
+
+	const handleDownload = () => {
+		const csv = jsonToCsv(data);
+		const blob = new Blob([csv], { type: "text/csv" });
+		const url = URL.createObjectURL(blob);
+		const link = document.createElement("a");
+		link.href = url;
+		link.download = "output.csv";
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+		URL.revokeObjectURL(url);
+	};
+
+	if (data.length === 0) {
+		return (
+			<div className="text-center text-muted-foreground py-8">
+				No data to display
+			</div>
+		);
+	}
+
+	const totalPages = Math.ceil(data.length / pageSize);
+	const startIndex = (currentPage - 1) * pageSize;
+	const endIndex = Math.min(startIndex + pageSize, data.length);
+	const paginatedData = data.slice(startIndex, endIndex);
+
+	return (
+		<div className="space-y-4 motion-preset-slide-up-sm">
+			<div className="flex items-center justify-between">
+				<Input
+					placeholder="Search all columns..."
+					value={globalFilter}
+					onChange={(e) => setGlobalFilter(e.target.value)}
+					className="max-w-sm"
+				/>
+				<Button variant="outline" size="sm" onClick={handleDownload}>
+					<Download className="h-4 w-4 mr-1" />
+					Export CSV
+				</Button>
+			</div>
+
+			<div className="rounded-md border overflow-hidden w-full max-w-full">
+				<ScrollArea className="w-full">
+					<div className="overflow-x-auto">
+						<Table>
+							<TableHeader>
+								{table.getHeaderGroups().map((headerGroup) => (
+									<TableRow key={headerGroup.id}>
+										{headerGroup.headers.map((header) => (
+											<TableHead key={header.id} className="min-w-[100px]">
+												{header.isPlaceholder
+													? null
+													: flexRender(
+															header.column.columnDef.header,
+															header.getContext(),
+														)}
+											</TableHead>
+										))}
+									</TableRow>
+								))}
+							</TableHeader>
+							<TableBody>
+								{paginatedData.length > 0 ? (
+									paginatedData.map((row, rowIndex) => (
+										<TableRow
+											key={startIndex + rowIndex}
+											data-state=""
+											className="motion-preset-fade-sm"
+										>
+											{columns.map((column, colIndex) => {
+												const key = column.accessorKey as string;
+												const value = row[key];
+												return (
+													<TableCell key={colIndex} className="min-w-[100px]">
+														{value !== undefined && value !== null
+															? String(value)
+															: ""}
+													</TableCell>
+												);
+											})}
+										</TableRow>
+									))
+								) : (
+									<TableRow>
+										<TableCell
+											colSpan={columns.length}
+											className="h-24 text-center"
+										>
+											No results.
+										</TableCell>
+									</TableRow>
+								)}
+							</TableBody>
+						</Table>
+					</div>
+					<ScrollBar orientation="horizontal" />
+				</ScrollArea>
+			</div>
+
+			<div className="flex items-center justify-between">
+				<div className="flex items-center gap-2">
+					<span className="text-sm text-muted-foreground">
+						Showing {startIndex + 1} to {endIndex} of {data.length} rows
+					</span>
+					<Select
+						value={pageSize.toString()}
+						onValueChange={(value) => {
+							onPageSizeChange(Number(value));
+							onPageChange(1); // Reset to first page when page size changes
+						}}
+					>
+						<SelectTrigger className="w-[70px] h-8">
+							<SelectValue />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="10">10</SelectItem>
+							<SelectItem value="25">25</SelectItem>
+							<SelectItem value="50">50</SelectItem>
+							<SelectItem value="100">100</SelectItem>
+						</SelectContent>
+					</Select>
+				</div>
+				{totalPages > 1 && (
+					<Pagination>
+						<PaginationContent>
+							<PaginationItem>
+								<PaginationPrevious
+									href="#"
+									onClick={(e) => {
+										e.preventDefault();
+										if (currentPage > 1) {
+											onPageChange(currentPage - 1);
+										}
+									}}
+									className={
+										currentPage === 1 ? "pointer-events-none opacity-50" : ""
+									}
+								/>
+							</PaginationItem>
+							{Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+								// Show first page, last page, current page, and pages around current
+								if (
+									page === 1 ||
+									page === totalPages ||
+									(page >= currentPage - 1 && page <= currentPage + 1)
+								) {
+									return (
+										<PaginationItem key={page}>
+											<PaginationLink
+												href="#"
+												onClick={(e) => {
+													e.preventDefault();
+													onPageChange(page);
+												}}
+												isActive={currentPage === page}
+											>
+												{page}
+											</PaginationLink>
+										</PaginationItem>
+									);
+								}
+								if (page === currentPage - 2 || page === currentPage + 2) {
+									return (
+										<PaginationItem key={page}>
+											<span className="px-2">...</span>
+										</PaginationItem>
+									);
+								}
+								return null;
+							})}
+							<PaginationItem>
+								<PaginationNext
+									href="#"
+									onClick={(e) => {
+										e.preventDefault();
+										if (currentPage < totalPages) {
+											onPageChange(currentPage + 1);
+										}
+									}}
+									className={
+										currentPage === totalPages
+											? "pointer-events-none opacity-50"
+											: ""
+									}
+								/>
+							</PaginationItem>
+						</PaginationContent>
+					</Pagination>
+				)}
+			</div>
+		</div>
+	);
+}
