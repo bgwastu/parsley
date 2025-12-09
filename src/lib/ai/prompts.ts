@@ -162,7 +162,7 @@ export function getParsePrompt(
 		}
 	} else {
 		base =
-			"Extract the data from the document(s) as a flat array of records suitable for CSV export. Each record should match the provided column schema.";
+			"Extract the data from the document(s) as a flat array of records suitable for CSV export. Each record should match the provided column schema. Return an array of objects where each object has the exact column names specified in the schema. If no matching records are found, return an empty array []. Dates can be in any string format (ISO 8601, MM/DD/YYYY, etc.).";
 	}
 
 	return customPrompt

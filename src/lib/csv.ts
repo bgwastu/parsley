@@ -50,7 +50,9 @@ export function buildCsvZodSchema(columns: CsvSchemaColumn[]): z.ZodSchema {
 				fieldSchema = z.boolean();
 				break;
 			case "date":
-				fieldSchema = z.string().datetime();
+				// Accept any string for dates - CSV format is flexible
+				// The date can be in various formats (ISO 8601, MM/DD/YYYY, etc.)
+				fieldSchema = z.string();
 				break;
 		}
 
@@ -61,7 +63,8 @@ export function buildCsvZodSchema(columns: CsvSchemaColumn[]): z.ZodSchema {
 		shape[column.name] = fieldSchema;
 	}
 
-	return z.array(z.object(shape));
+	// Allow empty arrays - the AI might not find any matching records
+	return z.array(z.object(shape)).min(0);
 }
 
 export const CsvSchemaColumnZodSchema = z.object({

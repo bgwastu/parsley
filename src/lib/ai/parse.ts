@@ -87,16 +87,29 @@ export async function parseDocument({
 			break;
 	}
 
-	const result = await generateObject({
-		model,
-		schema: zodSchema,
-		messages: [
-			{
-				role: "user",
-				content,
-			},
-		],
-	});
+	let result: { object: unknown };
+	try {
+		result = await generateObject({
+			model,
+			schema: zodSchema,
+			messages: [
+				{
+					role: "user",
+					content,
+				},
+			],
+		});
+	} catch (error) {
+		// Provide more helpful error messages for schema validation failures
+		if (error instanceof Error) {
+			if (error.message.includes("schema") || error.message.includes("validation")) {
+				throw new Error(
+					`Schema validation failed: The AI response did not match the expected schema. This might happen if:\n- The document doesn't contain data matching your schema\n- Date formats don't match expected format\n- Required fields are missing\n\nOriginal error: ${error.message}`,
+				);
+			}
+		}
+		throw error;
+	}
 
 	switch (schema.format) {
 		case "json":

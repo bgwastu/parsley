@@ -14,7 +14,7 @@ type AppAction =
 	| { type: "SET_PDF_PASSWORD"; payload: string }
 	| { type: "SET_PASSWORD_VALIDATING"; payload: boolean }
 	| { type: "SET_OUTPUT_FORMAT"; payload: OutputFormat }
-	| { type: "SET_SCHEMA"; payload: SchemaDefinition | null }
+	| { type: "SET_SCHEMA"; payload: { format: OutputFormat; schema: SchemaDefinition | null } }
 	| { type: "SET_SETTINGS"; payload: AppSettings }
 	| { type: "START_SCHEMA_GENERATION" }
 	| { type: "FINISH_SCHEMA_GENERATION"; payload: SchemaDefinition }
@@ -76,14 +76,15 @@ function appReducer(state: AppState, action: AppAction): AppState {
 			return {
 				...state,
 				outputFormat: action.payload,
-				schema: null,
-				// Don't clear output or pagination state when switching formats
 			};
 
 		case "SET_SCHEMA":
 			return {
 				...state,
-				schema: action.payload,
+				schemas: {
+					...state.schemas,
+					[action.payload.format]: action.payload.schema,
+				},
 			};
 
 		case "SET_SETTINGS":
@@ -105,7 +106,10 @@ function appReducer(state: AppState, action: AppAction): AppState {
 		case "FINISH_SCHEMA_GENERATION":
 			return {
 				...state,
-				schema: action.payload,
+				schemas: {
+					...state.schemas,
+					[action.payload.format]: action.payload,
+				},
 				generation: {
 					...state.generation,
 					isGeneratingSchema: false,
@@ -237,7 +241,10 @@ function createInitialState(settings: AppSettings): AppState {
 			pageRange: settings.pageRange,
 		},
 		outputFormat: "json",
-		schema: null,
+		schemas: {
+			json: null,
+			csv: null,
+		},
 		generation: {
 			isGeneratingSchema: false,
 			isParsing: false,
@@ -278,8 +285,8 @@ export function useAppState() {
 			dispatch({ type: "SET_OUTPUT_FORMAT", payload: format });
 		}, []),
 
-		setSchema: useCallback((schema: SchemaDefinition | null) => {
-			dispatch({ type: "SET_SCHEMA", payload: schema });
+		setSchema: useCallback((format: OutputFormat, schema: SchemaDefinition | null) => {
+			dispatch({ type: "SET_SCHEMA", payload: { format, schema } });
 		}, []),
 
 		setSettings: useCallback((settings: AppSettings) => {

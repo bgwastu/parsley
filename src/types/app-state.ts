@@ -8,7 +8,10 @@ export interface AppState {
 		password?: string; // Store password for password-protected PDFs
 	};
 	outputFormat: OutputFormat;
-	schema: SchemaDefinition | null;
+	schemas: {
+		json: SchemaDefinition | null;
+		csv: SchemaDefinition | null;
+	};
 	generation: {
 		isGeneratingSchema: boolean;
 		isParsing: boolean;

@@ -19,7 +19,7 @@ import {
 	readFileAsArrayBuffer,
 	readFileAsBase64,
 } from "@/lib/client/file-utils";
-import { validatePDFPassword, decryptPDF } from "@/lib/client/pdf";
+import { decryptPDF, validatePDFPassword } from "@/lib/client/pdf";
 
 export const Route = createFileRoute("/")({
 	component: App,
@@ -164,9 +164,10 @@ function App() {
 				documentData = await readFileAsBase64(state.document.file);
 			}
 
+			const currentSchema = state.schemas[state.outputFormat];
 			const currentJsonType =
-				state.outputFormat === "json" && state.schema?.format === "json"
-					? state.schema.jsonType
+				state.outputFormat === "json" && currentSchema?.format === "json"
+					? currentSchema.jsonType
 					: undefined;
 
 			const generatedSchema = await generateSchemaFromDocument({
@@ -186,8 +187,8 @@ function App() {
 			// Preserve jsonType if currently in array mode
 			const finalSchema =
 				generatedSchema.format === "json" &&
-				state.schema?.format === "json" &&
-				state.schema.jsonType === "array"
+				currentSchema?.format === "json" &&
+				currentSchema.jsonType === "array"
 					? { ...generatedSchema, jsonType: "array" as const }
 					: generatedSchema;
 
@@ -212,17 +213,18 @@ function App() {
 			toast.error("Please upload a document");
 			return;
 		}
-		if (!state.schema) {
+		const schema = state.schemas[state.outputFormat];
+		if (!schema) {
 			toast.error("Please define a schema");
 			return;
 		}
 
 		const duplicateNames =
-			state.schema.format === "json"
-				? state.schema.fields
+			schema.format === "json"
+				? schema.fields
 						.map((f) => f.name)
 						.filter((name, index, arr) => name && arr.indexOf(name) !== index)
-				: state.schema.columns
+				: schema.columns
 						.map((c) => c.name)
 						.filter((name, index, arr) => name && arr.indexOf(name) !== index);
 
@@ -255,7 +257,7 @@ function App() {
 			const result = await parseDocument({
 				documentData,
 				mimeType: state.document.file.type,
-				schema: state.schema,
+				schema,
 				provider: settings.provider,
 				modelId: settings.openrouterModel,
 				apiKey:
@@ -331,8 +333,8 @@ function App() {
 
 				<SchemaSection
 					format={state.outputFormat}
-					schema={state.schema}
-					onChange={actions.setSchema}
+					schema={state.schemas[state.outputFormat]}
+					onChange={(schema) => actions.setSchema(state.outputFormat, schema)}
 					onGenerateSchema={handleGenerateSchema}
 					isGenerating={state.generation.isGeneratingSchema}
 					hasDocument={state.document.file !== null}
@@ -342,9 +344,9 @@ function App() {
 				<GenerateButton
 					onClick={handleParse}
 					isLoading={state.generation.isParsing}
-					disabled={state.generation.isParsing || !isConfigured}
+					disabled={state.generation.isParsing || !isConfigured || state.schemas[state.outputFormat] === null}
 					hasDocument={state.document.file !== null}
-					hasSchema={state.schema !== null}
+					hasSchema={state.schemas[state.outputFormat] !== null}
 				/>
 
 				{state.output && (
