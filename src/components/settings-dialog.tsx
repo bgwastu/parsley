@@ -34,7 +34,6 @@ export function SettingsDialog({
 	const googleApiKeyId = useId();
 	const openrouterApiKeyId = useId();
 	const modelId = useId();
-	const pdfEngineId = useId();
 	const customPromptId = useId();
 
 	const { models, loading, error } = useOpenRouterModels(
@@ -166,54 +165,21 @@ export function SettingsDialog({
 								)}
 							</div>
 
-							<div className="space-y-3">
-								<Label>PDF Processing Engine</Label>
-								<RadioGroup
-									value={settings.pdfEngine}
-									onValueChange={(value) =>
-										onSettingsChange({
-											...settings,
-											pdfEngine: value as "native" | "mistral-ocr",
-										})
-									}
-								>
-									<div className="flex items-start space-x-2">
-										<RadioGroupItem
-											value="native"
-											id={`${pdfEngineId}-native`}
-										/>
-										<div className="flex-1">
-											<Label
-												htmlFor={`${pdfEngineId}-native`}
-												className="cursor-pointer font-medium"
-											>
-												Native
-											</Label>
-											<p className="text-muted-foreground text-xs mt-0.5">
-												Only available for models that support file input
-												natively (charged as input tokens)
-											</p>
-										</div>
-									</div>
-									<div className="flex items-start space-x-2">
-										<RadioGroupItem
-											value="mistral-ocr"
-											id={`${pdfEngineId}-mistral`}
-										/>
-										<div className="flex-1">
-											<Label
-												htmlFor={`${pdfEngineId}-mistral`}
-												className="cursor-pointer font-medium"
-											>
-												Mistral OCR
-											</Label>
-											<p className="text-muted-foreground text-xs mt-0.5">
-												Best for scanned documents or PDFs with images ($2 per
-												1,000 pages)
-											</p>
-										</div>
-									</div>
-								</RadioGroup>
+							<div className="rounded-lg border border-border bg-muted/50 p-3">
+								<p className="text-sm text-muted-foreground">
+									<strong className="text-foreground">PDF Processing:</strong>{" "}
+									OpenRouter automatically processes PDFs using native support
+									when available, with automatic fallback to Mistral OCR for
+									scanned documents.{" "}
+									<a
+										href="https://openrouter.ai/docs/guides/overview/multimodal/pdfs"
+										target="_blank"
+										rel="noopener noreferrer"
+										className="text-primary hover:underline"
+									>
+										Learn more
+									</a>
+								</p>
 							</div>
 						</>
 					)}

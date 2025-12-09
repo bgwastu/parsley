@@ -19,7 +19,7 @@ import {
 	readFileAsArrayBuffer,
 	readFileAsBase64,
 } from "@/lib/client/file-utils";
-import { processPDF } from "@/lib/client/pdf";
+import { validatePDFPassword, decryptPDF } from "@/lib/client/pdf";
 
 export const Route = createFileRoute("/")({
 	component: App,
@@ -82,7 +82,13 @@ function App() {
 
 		try {
 			const arrayBuffer = await readFileAsArrayBuffer(state.document.file);
-			await processPDF(arrayBuffer, state.document.pageRange, password);
+			const isValid = await validatePDFPassword(arrayBuffer, password);
+
+			if (!isValid) {
+				actions.setPasswordError("Incorrect password. Please try again.");
+				actions.setPasswordValidating(false);
+				return;
+			}
 
 			actions.setPdfPassword(password);
 			actions.setPasswordValidating(false);
@@ -91,7 +97,7 @@ function App() {
 			}
 			actions.hidePasswordDialog();
 		} catch {
-			actions.setPasswordError("Incorrect password. Please try again.");
+			actions.setPasswordError("Failed to validate password.");
 			actions.setPasswordValidating(false);
 		}
 	};
@@ -113,18 +119,18 @@ function App() {
 		if (file.type === "application/pdf") {
 			try {
 				const arrayBuffer = await readFileAsArrayBuffer(file);
-				await processPDF(
+				const isValid = await validatePDFPassword(
 					arrayBuffer,
-					state.document.pageRange,
 					state.document.password,
-					async () => {
-						if (state.document.password) {
-							actions.setPdfPassword("");
-						}
-						const password = await showPasswordDialog();
-						return password;
-					},
 				);
+
+				if (!isValid) {
+					// PDF is password-protected, show password dialog
+					if (state.document.password) {
+						actions.setPdfPassword("");
+					}
+					await showPasswordDialog();
+				}
 			} catch {
 				// Password dialog will handle the error
 			}
@@ -146,12 +152,12 @@ function App() {
 				state.document.file.type === "application/pdf" &&
 				state.document.password
 			) {
-				// Password-protected PDF: decrypt and convert to images
+				// Password-protected PDF: decrypt it first
 				const arrayBuffer = await readFileAsArrayBuffer(state.document.file);
-				documentData = await processPDF(
+				documentData = await decryptPDF(
 					arrayBuffer,
-					state.document.pageRange,
 					state.document.password,
+					state.document.pageRange,
 				);
 			} else {
 				// Non-password PDF or image: send raw file data
@@ -175,7 +181,6 @@ function App() {
 				filename: state.document.file.name,
 				mimeType: state.document.file.type,
 				jsonType: currentJsonType,
-				pdfEngine: settings.pdfEngine,
 			});
 
 			// Preserve jsonType if currently in array mode
@@ -235,12 +240,12 @@ function App() {
 				state.document.file.type === "application/pdf" &&
 				state.document.password
 			) {
-				// Password-protected PDF: decrypt and convert to images
+				// Password-protected PDF: decrypt it first
 				const arrayBuffer = await readFileAsArrayBuffer(state.document.file);
-				documentData = await processPDF(
+				documentData = await decryptPDF(
 					arrayBuffer,
-					state.document.pageRange,
 					state.document.password,
+					state.document.pageRange,
 				);
 			} else {
 				// Non-password PDF or image: send raw file data
@@ -258,7 +263,6 @@ function App() {
 						? settings.googleApiKey
 						: settings.openrouterApiKey,
 				customPrompt: settings.customPrompt,
-				pdfEngine: settings.pdfEngine,
 				filename: state.document.file.name,
 			});
 

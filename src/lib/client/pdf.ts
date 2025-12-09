@@ -1,3 +1,4 @@
+import { PDFDocument } from "@cantoo/pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
 import type { PageRange } from "@/types/settings";
 
@@ -8,73 +9,99 @@ if (typeof window !== "undefined") {
 	).toString();
 }
 
-export async function processPDF(
+export async function validatePDFPassword(
 	arrayBuffer: ArrayBuffer,
-	pageRange: PageRange = { start: 1, end: null },
 	password?: string,
-	onPasswordNeeded?: () => Promise<string>,
-): Promise<string[]> {
-	// Clone the ArrayBuffer to prevent detachment issues
-	// pdfjs may transfer the buffer, making it unusable for subsequent calls
-	const clonedBuffer = arrayBuffer.slice(0);
-
+): Promise<boolean> {
 	try {
+		const clonedBuffer = arrayBuffer.slice(0);
 		const loadingTask = pdfjsLib.getDocument({
 			data: clonedBuffer,
 			password,
 		});
-
-		const pdfDocument = await loadingTask.promise;
-		const numPages = pdfDocument.numPages;
-
-		const startPage = Math.max(1, pageRange.start);
-		const endPage = pageRange.end
-			? Math.min(pageRange.end, numPages)
-			: numPages;
-
-		const base64Images: string[] = [];
-
-		for (let pageNum = startPage; pageNum <= endPage; pageNum++) {
-			const page = await pdfDocument.getPage(pageNum);
-			const viewport = page.getViewport({ scale: 2.0 });
-
-			const canvas = document.createElement("canvas");
-			const context = canvas.getContext("2d");
-
-			if (!context) {
-				throw new Error("Failed to get canvas context");
-			}
-
-			canvas.height = viewport.height;
-			canvas.width = viewport.width;
-
-			await page.render({
-				canvasContext: context,
-				viewport,
-			}).promise;
-
-			const base64 = canvas.toDataURL("image/png");
-			base64Images.push(base64);
-		}
-
-		return base64Images;
+		await loadingTask.promise;
+		return true;
 	} catch (error: unknown) {
 		if (error && typeof error === "object" && "name" in error) {
 			if (error.name === "PasswordException") {
-				if (onPasswordNeeded) {
-					const userPassword = await onPasswordNeeded();
-					// Clone the original buffer again for the retry
-					const retryBuffer = arrayBuffer.slice(0);
-					return processPDF(retryBuffer, pageRange, userPassword);
-				}
-				throw new Error("PDF is password protected");
+				return false;
 			}
+		}
+		throw error;
+	}
+}
 
-			if (error.name === "InvalidPDFException") {
-				throw new Error("Invalid PDF file");
+export async function decryptPDF(
+	arrayBuffer: ArrayBuffer,
+	password: string,
+	pageRange?: PageRange,
+): Promise<string> {
+	try {
+		// Load encrypted document with @cantoo/pdf-lib
+		const pdfDoc = await PDFDocument.load(arrayBuffer, {
+			ignoreEncryption: true,
+			password,
+		});
+
+		let finalDoc = pdfDoc;
+
+		// If page range is specified, create a new PDF with only those pages
+		if (pageRange) {
+			const totalPages = pdfDoc.getPageCount();
+			const startPage = Math.max(1, pageRange.start) - 1; // Convert to 0-indexed
+			const endPage = pageRange.end
+				? Math.min(pageRange.end, totalPages) - 1
+				: totalPages - 1;
+
+			// Only create a new document if we're not using all pages
+			if (startPage > 0 || endPage < totalPages - 1) {
+				finalDoc = await PDFDocument.create();
+				const pagesToCopy = await finalDoc.copyPages(
+					pdfDoc,
+					Array.from(
+						{ length: endPage - startPage + 1 },
+						(_, i) => startPage + i,
+					),
+				);
+
+				for (const page of pagesToCopy) {
+					finalDoc.addPage(page);
+				}
 			}
 		}
 
-		throw error;
+		// Save the decrypted PDF
+		const decryptedPdfBytes = await finalDoc.save();
+		const base64 = btoa(
+			String.fromCharCode(...new Uint8Array(decryptedPdfBytes)),
+		);
+		return `data:application/pdf;base64,${base64}`;
+	} catch (error: unknown) {
+		console.error("PDF decryption error:", error);
+
+		if (error && typeof error === "object") {
+			if ("message" in error && typeof error.message === "string") {
+				console.error("Error message:", error.message);
+
+				if (
+					error.message.includes("password") ||
+					error.message.includes("Password")
+				) {
+					throw new Error("Invalid PDF password");
+				}
+				if (
+					error.message.includes("encrypted") ||
+					error.message.includes("Encrypted")
+				) {
+					throw new Error(
+						"This PDF uses an encryption method that is not supported.",
+					);
+				}
+			}
+		}
+
+		throw new Error(
+			`Failed to decrypt PDF: ${error instanceof Error ? error.message : "Unknown error"}`,
+		);
 	}
 }

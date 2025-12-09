@@ -13,7 +13,6 @@ export interface ParseDocumentOptions extends ModelConfig {
 	mimeType: string;
 	schema: SchemaDefinition;
 	customPrompt?: string;
-	pdfEngine?: "native" | "mistral-ocr";
 	filename?: string;
 }
 
@@ -36,7 +35,6 @@ export async function parseDocument({
 	modelId,
 	apiKey,
 	customPrompt,
-	pdfEngine,
 	filename,
 }: ParseDocumentOptions): Promise<GenerationOutput> {
 	const jsonType = schema.format === "json" ? schema.jsonType : undefined;
@@ -52,30 +50,17 @@ export async function parseDocument({
 		{ type: "text", text: prompt },
 	];
 
-	// Handle PDFs with OpenRouter - use file type for native, or image for mistral-ocr
+	// Handle PDFs with OpenRouter - always use native file support
 	if (provider === "openrouter" && isPDF && filename) {
-		if (pdfEngine === "native") {
-			// Use FilePart for native file support
-			const fileData = documentDataArray[0];
-			const base64Data = extractBase64(fileData);
-			content.push({
-				type: "file",
-				data: `data:${mimeType};base64,${base64Data}`,
-				mediaType: mimeType,
-				filename,
-			});
-		} else {
-			// For mistral-ocr, use image format (will be handled by plugin)
-			for (const dataItem of documentDataArray) {
-				const pdfData = dataItem.startsWith("data:")
-					? dataItem
-					: `data:application/pdf;base64,${extractBase64(dataItem)}`;
-				content.push({
-					type: "image",
-					image: pdfData,
-				});
-			}
-		}
+		// Use FilePart for native file support
+		const fileData = documentDataArray[0];
+		const base64Data = extractBase64(fileData);
+		content.push({
+			type: "file",
+			data: `data:${mimeType};base64,${base64Data}`,
+			mediaType: mimeType,
+			filename,
+		});
 	} else {
 		// For non-PDF images or other providers
 		for (const dataItem of documentDataArray) {
@@ -86,27 +71,10 @@ export async function parseDocument({
 		}
 	}
 
-	// Build plugins for mistral-ocr if needed
-	const plugins =
-		provider === "openrouter" &&
-		isPDF &&
-		pdfEngine === "mistral-ocr" &&
-		filename
-			? [
-					{
-						id: "file-parser",
-						pdf: {
-							engine: "mistral-ocr",
-						},
-					},
-				]
-			: undefined;
-
 	const model = createModel({
 		provider,
 		modelId,
 		apiKey,
-		plugins,
 	});
 
 	let zodSchema: z.ZodSchema;
@@ -119,8 +87,7 @@ export async function parseDocument({
 			break;
 	}
 
-	// Build generateObject options
-	const generateOptions: Parameters<typeof generateObject>[0] = {
+	const result = await generateObject({
 		model,
 		schema: zodSchema,
 		messages: [
@@ -129,17 +96,7 @@ export async function parseDocument({
 				content,
 			},
 		],
-	};
-
-	// Add plugins for mistral-ocr if using OpenRouter
-	if (plugins && provider === "openrouter") {
-		// biome-ignore lint/suspicious/noExplicitAny: OpenRouter experimental_providerMetadata is not typed in AI SDK
-		(generateOptions as any).experimental_providerMetadata = {
-			plugins,
-		};
-	}
-
-	const result = await generateObject(generateOptions);
+	});
 
 	switch (schema.format) {
 		case "json":

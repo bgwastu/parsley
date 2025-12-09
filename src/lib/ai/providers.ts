@@ -6,12 +6,6 @@ export interface ModelConfig {
 	provider: "openrouter" | "google";
 	modelId?: string;
 	apiKey: string;
-	plugins?: Array<{
-		id: string;
-		pdf?: {
-			engine: string;
-		};
-	}>;
 }
 
 export function createModel(config: ModelConfig): LanguageModel {

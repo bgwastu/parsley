@@ -5,7 +5,6 @@ export interface AppSettings {
 	googleApiKey: string;
 	customPrompt: string;
 	pageRange: PageRange;
-	pdfEngine: "native" | "mistral-ocr";
 }
 
 export interface PageRange {

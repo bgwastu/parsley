@@ -16,7 +16,6 @@ export const AppSettingsSchema = z.object({
 	customPrompt: z.string(),
 	pageRange: PageRangeSchema,
 	outputFormat: z.enum(["json", "csv"]),
-	pdfEngine: z.enum(["native", "mistral-ocr"]),
 });
 
 export const defaultSettings: AppSettings = {
@@ -30,7 +29,6 @@ export const defaultSettings: AppSettings = {
 		end: null,
 	},
 	outputFormat: "json",
-	pdfEngine: "native",
 };
 
 export function loadSettings(): AppSettings {
