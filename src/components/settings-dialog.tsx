@@ -134,9 +134,7 @@ export function SettingsDialog({
 									/>
 								) : models.length === 0 ? (
 									<Combobox
-										options={[
-											{ value: "empty", label: "No models available" },
-										]}
+										options={[{ value: "empty", label: "No models available" }]}
 										value="empty"
 										disabled={true}
 										placeholder="No models available"
@@ -180,24 +178,38 @@ export function SettingsDialog({
 									}
 								>
 									<div className="flex items-start space-x-2">
-										<RadioGroupItem value="native" id={`${pdfEngineId}-native`} />
+										<RadioGroupItem
+											value="native"
+											id={`${pdfEngineId}-native`}
+										/>
 										<div className="flex-1">
-											<Label htmlFor={`${pdfEngineId}-native`} className="cursor-pointer font-medium">
+											<Label
+												htmlFor={`${pdfEngineId}-native`}
+												className="cursor-pointer font-medium"
+											>
 												Native
 											</Label>
 											<p className="text-muted-foreground text-xs mt-0.5">
-												Only available for models that support file input natively (charged as input tokens)
+												Only available for models that support file input
+												natively (charged as input tokens)
 											</p>
 										</div>
 									</div>
 									<div className="flex items-start space-x-2">
-										<RadioGroupItem value="mistral-ocr" id={`${pdfEngineId}-mistral`} />
+										<RadioGroupItem
+											value="mistral-ocr"
+											id={`${pdfEngineId}-mistral`}
+										/>
 										<div className="flex-1">
-											<Label htmlFor={`${pdfEngineId}-mistral`} className="cursor-pointer font-medium">
+											<Label
+												htmlFor={`${pdfEngineId}-mistral`}
+												className="cursor-pointer font-medium"
+											>
 												Mistral OCR
 											</Label>
 											<p className="text-muted-foreground text-xs mt-0.5">
-												Best for scanned documents or PDFs with images ($2 per 1,000 pages)
+												Best for scanned documents or PDFs with images ($2 per
+												1,000 pages)
 											</p>
 										</div>
 									</div>

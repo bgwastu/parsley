@@ -11,24 +11,21 @@ export function getSchemaGenerationPrompt(
 	context?: SchemaGenerationContext,
 ): string {
 	const { filename, mimeType } = context || {};
-	
-	// Build context hints from filename
-	const filenameHints = filename
-		? `\n\nDocument filename: "${filename}"`
-		: "";
-	
-	const mimeTypeHint = mimeType
-		? `\nDocument type: ${mimeType}`
-		: "";
 
-	const contextSection = filenameHints || mimeTypeHint
-		? `\n## Document Context${filenameHints}${mimeTypeHint}\n\nUse the filename and document content to infer:\n- What type of document this is (invoice, receipt, contract, form, report, etc.)\n- Why someone would upload this document (what business need it serves)\n- What kind of data extraction would be most valuable\n- Common patterns and fields for this document type`
-		: "";
+	// Build context hints from filename
+	const filenameHints = filename ? `\n\nDocument filename: "${filename}"` : "";
+
+	const mimeTypeHint = mimeType ? `\nDocument type: ${mimeType}` : "";
+
+	const contextSection =
+		filenameHints || mimeTypeHint
+			? `\n## Document Context${filenameHints}${mimeTypeHint}\n\nUse the filename and document content to infer:\n- What type of document this is (invoice, receipt, contract, form, report, etc.)\n- Why someone would upload this document (what business need it serves)\n- What kind of data extraction would be most valuable\n- Common patterns and fields for this document type`
+			: "";
 
 	switch (format) {
 		case "json": {
 			const jsonType = context?.jsonType ?? "object";
-			
+
 			if (jsonType === "array") {
 				return `You are an expert at analyzing documents and creating data extraction schemas. Your goal is to identify REPEATING OBJECTS or ITEMS in the document that should be extracted as an array.${contextSection}
 
@@ -68,7 +65,7 @@ export function getSchemaGenerationPrompt(
 
 **IMPORTANT**: Return a schema that defines the STRUCTURE OF ONE OBJECT in the array. The AI will extract ALL matching objects from the document and return them as an array. Focus on identifying what should be repeated in the array.`;
 			}
-			
+
 			// Object format (default)
 			return `You are an expert at analyzing documents and creating data extraction schemas. Your goal is to understand WHY the user uploaded this document and WHAT data they want to extract.${contextSection}
 
@@ -154,15 +151,18 @@ export function getParsePrompt(
 	jsonType?: "object" | "array",
 ): string {
 	let base: string;
-	
+
 	if (format === "json") {
 		if (jsonType === "array") {
-			base = "Extract ALL matching objects from the document(s) as an array. Each object in the array should match the provided schema. Look for repeating patterns or multiple instances of similar objects in the document and extract each one as a separate array element.";
+			base =
+				"Extract ALL matching objects from the document(s) as an array. Each object in the array should match the provided schema. Look for repeating patterns or multiple instances of similar objects in the document and extract each one as a separate array element.";
 		} else {
-			base = "Extract the structured data from the document(s) as nested JSON matching the provided schema.";
+			base =
+				"Extract the structured data from the document(s) as nested JSON matching the provided schema.";
 		}
 	} else {
-		base = "Extract the data from the document(s) as a flat array of records suitable for CSV export. Each record should match the provided column schema.";
+		base =
+			"Extract the data from the document(s) as a flat array of records suitable for CSV export. Each record should match the provided column schema.";
 	}
 
 	return customPrompt

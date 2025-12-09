@@ -1,6 +1,23 @@
 import { z } from "zod";
 import type { JsonSchemaField, SchemaDefinition } from "@/types/output";
 
+export function formatJson(data: object, pretty = true): string {
+	return pretty ? JSON.stringify(data, null, 2) : JSON.stringify(data);
+}
+
+export function downloadJson(data: object, filename: string): void {
+	const jsonString = formatJson(data);
+	const blob = new Blob([jsonString], { type: "application/json" });
+	const url = URL.createObjectURL(blob);
+	const link = document.createElement("a");
+	link.href = url;
+	link.download = filename.endsWith(".json") ? filename : `${filename}.json`;
+	document.body.appendChild(link);
+	link.click();
+	document.body.removeChild(link);
+	URL.revokeObjectURL(url);
+}
+
 function buildFieldSchema(field: JsonSchemaField): z.ZodTypeAny {
 	let fieldSchema: z.ZodTypeAny;
 
@@ -29,13 +46,6 @@ function buildFieldSchema(field: JsonSchemaField): z.ZodTypeAny {
 					fieldSchema = z.array(z.string());
 			}
 			break;
-		case "object":
-			if (field.children && field.children.length > 0) {
-				fieldSchema = buildJsonZodSchemaFromFields(field.children);
-			} else {
-				fieldSchema = z.object({});
-			}
-			break;
 		default:
 			fieldSchema = z.any();
 	}
@@ -58,25 +68,21 @@ function buildJsonZodSchemaFromFields(fields: JsonSchemaField[]): z.ZodSchema {
 	return z.object(shape);
 }
 
-export function buildJsonZodSchema(schema: SchemaDefinition & { format: "json" }): z.ZodSchema {
+export function buildJsonZodSchema(
+	schema: SchemaDefinition & { format: "json" },
+): z.ZodSchema {
 	if (schema.jsonType === "array") {
-		// Array of objects - use fields to define the object structure
 		return z.array(buildJsonZodSchemaFromFields(schema.fields));
 	}
-	// Object format
 	return buildJsonZodSchemaFromFields(schema.fields);
 }
 
-// Define the schema without lazy evaluation to work with Google AI Studio
-// Google's API doesn't handle z.lazy() properly when converting to JSON Schema
-// We use z.any() for the children array to avoid recursive reference issues
 export const JsonSchemaFieldZodSchema: z.ZodType<JsonSchemaField> = z.object({
 	name: z.string(),
-	type: z.enum(["string", "number", "boolean", "date", "array", "object"]),
+	type: z.enum(["string", "number", "boolean", "date", "array"]),
 	required: z.boolean(),
 	description: z.string().optional(),
 	arrayItemType: z.enum(["string", "number", "boolean"]).optional(),
-	children: z.array(z.any()).optional(), // Use z.any() instead of lazy to avoid Google API issues
 }) as z.ZodType<JsonSchemaField>;
 
 export const JsonSchemaResponseSchema = z.object({

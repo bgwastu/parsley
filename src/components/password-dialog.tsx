@@ -55,13 +55,17 @@ export function PasswordDialog({
 	}, [error]);
 
 	return (
-		<Dialog 
-			open={open} 
+		<Dialog
+			open={open}
 			onOpenChange={() => {
 				// Prevent closing the dialog - do nothing
 			}}
 		>
-			<DialogContent showCloseButton={false} onEscapeKeyDown={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()}>
+			<DialogContent
+				showCloseButton={false}
+				onEscapeKeyDown={(e) => e.preventDefault()}
+				onPointerDownOutside={(e) => e.preventDefault()}
+			>
 				<DialogHeader>
 					<DialogTitle>PDF Password Required</DialogTitle>
 					<DialogDescription>
@@ -79,7 +83,9 @@ export function PasswordDialog({
 								type={showPassword ? "text" : "password"}
 								value={password}
 								onChange={(e) => setPassword(e.target.value)}
-								onKeyDown={(e) => e.key === "Enter" && !isValidating && handleSubmit()}
+								onKeyDown={(e) =>
+									e.key === "Enter" && !isValidating && handleSubmit()
+								}
 								placeholder="Enter PDF password"
 								disabled={isValidating}
 							/>
@@ -104,7 +110,10 @@ export function PasswordDialog({
 					<Button variant="outline" onClick={onCancel} disabled={isValidating}>
 						Cancel
 					</Button>
-					<Button onClick={handleSubmit} disabled={isValidating || !password.trim()}>
+					<Button
+						onClick={handleSubmit}
+						disabled={isValidating || !password.trim()}
+					>
 						{isValidating ? "Validating..." : "Submit"}
 					</Button>
 				</DialogFooter>

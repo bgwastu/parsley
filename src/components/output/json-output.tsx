@@ -9,7 +9,7 @@ import {
 	PaginationNext,
 	PaginationPrevious,
 } from "@/components/ui/pagination";
-import { downloadJson, formatJson } from "@/lib/output/json";
+import { downloadJson, formatJson } from "@/lib/json";
 
 interface JsonOutputProps {
 	data: object | unknown[];
@@ -27,7 +27,9 @@ export function JsonOutput({
 	const [copied, setCopied] = useState(false);
 
 	const isArray = Array.isArray(data);
-	const totalPages = isArray ? Math.max(1, Math.ceil(data.length / ITEMS_PER_PAGE)) : 1;
+	const totalPages = isArray
+		? Math.max(1, Math.ceil(data.length / ITEMS_PER_PAGE))
+		: 1;
 	const paginatedData = useMemo(() => {
 		if (!isArray) return data;
 		const start = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -100,37 +102,39 @@ export function JsonOutput({
 									}
 								/>
 							</PaginationItem>
-							{Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-								// Show first page, last page, current page, and pages around current
-								if (
-									page === 1 ||
-									page === totalPages ||
-									(page >= currentPage - 1 && page <= currentPage + 1)
-								) {
-									return (
-										<PaginationItem key={page}>
-											<PaginationLink
-												href="#"
-												onClick={(e) => {
-													e.preventDefault();
-													onPageChange(page);
-												}}
-												isActive={currentPage === page}
-											>
-												{page}
-											</PaginationLink>
-										</PaginationItem>
-									);
-								}
-								if (page === currentPage - 2 || page === currentPage + 2) {
-									return (
-										<PaginationItem key={page}>
-											<span className="px-2">...</span>
-										</PaginationItem>
-									);
-								}
-								return null;
-							})}
+							{Array.from({ length: totalPages }, (_, i) => i + 1).map(
+								(page) => {
+									// Show first page, last page, current page, and pages around current
+									if (
+										page === 1 ||
+										page === totalPages ||
+										(page >= currentPage - 1 && page <= currentPage + 1)
+									) {
+										return (
+											<PaginationItem key={page}>
+												<PaginationLink
+													href="#"
+													onClick={(e) => {
+														e.preventDefault();
+														onPageChange(page);
+													}}
+													isActive={currentPage === page}
+												>
+													{page}
+												</PaginationLink>
+											</PaginationItem>
+										);
+									}
+									if (page === currentPage - 2 || page === currentPage + 2) {
+										return (
+											<PaginationItem key={page}>
+												<span className="px-2">...</span>
+											</PaginationItem>
+										);
+									}
+									return null;
+								},
+							)}
 							<PaginationItem>
 								<PaginationNext
 									href="#"

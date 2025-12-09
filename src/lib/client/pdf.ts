@@ -17,7 +17,7 @@ export async function processPDF(
 	// Clone the ArrayBuffer to prevent detachment issues
 	// pdfjs may transfer the buffer, making it unusable for subsequent calls
 	const clonedBuffer = arrayBuffer.slice(0);
-	
+
 	try {
 		const loadingTask = pdfjsLib.getDocument({
 			data: clonedBuffer,

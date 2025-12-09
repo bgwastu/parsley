@@ -6,8 +6,8 @@ import type {
 	OutputFormat,
 	SchemaDefinition,
 } from "@/types/output";
-import { CsvSchemaResponseSchema } from "../schemas/csv-schema";
-import { JsonSchemaResponseSchema } from "../schemas/json-schema";
+import { CsvSchemaResponseSchema } from "../csv";
+import { JsonSchemaResponseSchema } from "../json";
 import {
 	getSchemaGenerationPrompt,
 	type SchemaGenerationContext,
@@ -132,8 +132,8 @@ export async function generateSchemaFromDocument({
 
 	// Add plugins for mistral-ocr if using OpenRouter
 	if (plugins && provider === "openrouter") {
-		// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-				(generateOptions as any).experimental_providerMetadata = {
+		// biome-ignore lint/suspicious/noExplicitAny: OpenRouter experimental_providerMetadata is not typed in AI SDK
+		(generateOptions as any).experimental_providerMetadata = {
 			plugins,
 		};
 	}

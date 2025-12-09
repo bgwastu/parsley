@@ -57,11 +57,11 @@ function App() {
 		if (state.generation.error) {
 			const error = state.generation.error;
 			let errorMessage = error.message;
-			
+
 			if (error.type === "validation_error" && error.fields) {
 				errorMessage = `${error.message}\nFields: ${error.fields.join(", ")}`;
 			}
-			
+
 			toast.error(errorMessage);
 		}
 	}, [state.generation.error]);
@@ -77,24 +77,13 @@ function App() {
 			return;
 		}
 
-		// Validate password before closing
 		actions.setPasswordValidating(true);
 		actions.setPasswordError("");
 
 		try {
 			const arrayBuffer = await readFileAsArrayBuffer(state.document.file);
-			// Try to process PDF with the password to validate it
-			await processPDF(
-				arrayBuffer,
-				state.document.pageRange,
-				password,
-				async () => {
-					// If password is wrong, this callback will be called
-					throw new Error("Incorrect password");
-				},
-			);
+			await processPDF(arrayBuffer, state.document.pageRange, password);
 
-			// Password is correct - save it and resolve
 			actions.setPdfPassword(password);
 			actions.setPasswordValidating(false);
 			if (state.ui.passwordDialog?.resolve) {
@@ -102,7 +91,6 @@ function App() {
 			}
 			actions.hidePasswordDialog();
 		} catch {
-			// Password is incorrect
 			actions.setPasswordError("Incorrect password. Please try again.");
 			actions.setPasswordValidating(false);
 		}
@@ -113,7 +101,6 @@ function App() {
 			state.ui.passwordDialog.reject();
 		}
 		actions.hidePasswordDialog();
-		// Remove the file when cancel is clicked
 		actions.setDocument(null);
 		actions.setPdfPassword("");
 		actions.setError({
@@ -129,14 +116,12 @@ function App() {
 				await processPDF(
 					arrayBuffer,
 					state.document.pageRange,
-					state.document.password, // Use stored password if available
+					state.document.password,
 					async () => {
-						// Clear stored password if it failed
 						if (state.document.password) {
 							actions.setPdfPassword("");
 						}
 						const password = await showPasswordDialog();
-						// Password will be validated and saved in handlePasswordSubmit
 						return password;
 					},
 				);
@@ -157,28 +142,23 @@ function App() {
 		try {
 			let documentData: string | string[];
 
-			if (state.document.file.type === "application/pdf") {
+			if (
+				state.document.file.type === "application/pdf" &&
+				state.document.password
+			) {
+				// Password-protected PDF: decrypt and convert to images
 				const arrayBuffer = await readFileAsArrayBuffer(state.document.file);
-				const base64Images = await processPDF(
+				documentData = await processPDF(
 					arrayBuffer,
 					state.document.pageRange,
-					state.document.password, // Use stored password if available
-					async () => {
-						// Clear stored password if it failed
-						if (state.document.password) {
-							actions.setPdfPassword("");
-						}
-						const password = await showPasswordDialog();
-						// Password will be validated and saved in handlePasswordSubmit
-						return password;
-					},
+					state.document.password,
 				);
-				documentData = base64Images;
 			} else {
+				// Non-password PDF or image: send raw file data
 				documentData = await readFileAsBase64(state.document.file);
 			}
 
-			const currentJsonType = 
+			const currentJsonType =
 				state.outputFormat === "json" && state.schema?.format === "json"
 					? state.schema.jsonType
 					: undefined;
@@ -251,24 +231,19 @@ function App() {
 		try {
 			let documentData: string | string[];
 
-			if (state.document.file.type === "application/pdf") {
+			if (
+				state.document.file.type === "application/pdf" &&
+				state.document.password
+			) {
+				// Password-protected PDF: decrypt and convert to images
 				const arrayBuffer = await readFileAsArrayBuffer(state.document.file);
-				const base64Images = await processPDF(
+				documentData = await processPDF(
 					arrayBuffer,
 					state.document.pageRange,
-					state.document.password, // Use stored password if available
-					async () => {
-						// Clear stored password if it failed
-						if (state.document.password) {
-							actions.setPdfPassword("");
-						}
-						const password = await showPasswordDialog();
-						// Password will be saved in handlePasswordSubmit
-						return password;
-					},
+					state.document.password,
 				);
-				documentData = base64Images;
 			} else {
+				// Non-password PDF or image: send raw file data
 				documentData = await readFileAsBase64(state.document.file);
 			}
 
@@ -299,14 +274,15 @@ function App() {
 		}
 	};
 
-	const isConfigured =
+	const isConfigured = Boolean(
 		(settings.provider === "google" && settings.googleApiKey) ||
-		(settings.provider === "openrouter" &&
-			settings.openrouterApiKey &&
-			settings.openrouterModel);
+			(settings.provider === "openrouter" &&
+				settings.openrouterApiKey &&
+				settings.openrouterModel),
+	);
 
 	return (
-		<main className="container mx-auto p-6 w-full max-w-5xl">
+		<main className="container mx-auto p-6 w-full max-w-3xl">
 			<div className="mb-8">
 				<div className="flex items-center justify-between">
 					<div className="flex items-center gap-3">
@@ -334,7 +310,7 @@ function App() {
 				</div>
 			</div>
 
-			<div className="grid gap-6 w-full">
+			<div className="flex flex-col gap-4">
 				<DocumentUpload
 					value={state.document.file}
 					onChange={actions.setDocument}

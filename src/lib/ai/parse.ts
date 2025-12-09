@@ -3,9 +3,8 @@ import { generateObject } from "ai";
 import type { z } from "zod";
 import type { GenerationOutput } from "@/types/app-state";
 import type { SchemaDefinition } from "@/types/output";
-import { jsonToCsvRows } from "../output/csv";
-import { buildCsvZodSchema } from "../schemas/csv-schema";
-import { buildJsonZodSchema } from "../schemas/json-schema";
+import { buildCsvZodSchema, jsonToCsvRows } from "../csv";
+import { buildJsonZodSchema } from "../json";
 import { getParsePrompt } from "./prompts";
 import { createModel, type ModelConfig } from "./providers";
 
@@ -134,7 +133,7 @@ export async function parseDocument({
 
 	// Add plugins for mistral-ocr if using OpenRouter
 	if (plugins && provider === "openrouter") {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		// biome-ignore lint/suspicious/noExplicitAny: OpenRouter experimental_providerMetadata is not typed in AI SDK
 		(generateOptions as any).experimental_providerMetadata = {
 			plugins,
 		};
@@ -146,9 +145,10 @@ export async function parseDocument({
 		case "json":
 			return {
 				format: "json",
-				data: schema.jsonType === "array" 
-					? (result.object as unknown[])
-					: (result.object as object),
+				data:
+					schema.jsonType === "array"
+						? (result.object as unknown[])
+						: (result.object as object),
 			};
 		case "csv": {
 			const dataArray = result.object as object[];

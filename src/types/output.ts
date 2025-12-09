@@ -2,11 +2,10 @@ export type OutputFormat = "json" | "csv";
 
 export interface JsonSchemaField {
 	name: string;
-	type: "string" | "number" | "boolean" | "date" | "array" | "object";
+	type: "string" | "number" | "boolean" | "date" | "array";
 	required: boolean;
 	description?: string;
 	arrayItemType?: "string" | "number" | "boolean";
-	children?: JsonSchemaField[];
 }
 
 export interface CsvSchemaColumn {
