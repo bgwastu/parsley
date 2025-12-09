@@ -32,7 +32,9 @@ function App() {
 
 	useEffect(() => {
 		const isConfigured =
-			(settings.provider === "google" && settings.googleApiKey) ||
+			(settings.provider === "google" &&
+				settings.googleApiKey &&
+				settings.googleModel) ||
 			(settings.provider === "openrouter" &&
 				settings.openrouterApiKey &&
 				settings.openrouterModel);
@@ -43,6 +45,7 @@ function App() {
 	}, [
 		settings.provider,
 		settings.googleApiKey,
+		settings.googleModel,
 		settings.openrouterApiKey,
 		settings.openrouterModel,
 		actions.setSettingsOpen,
@@ -174,7 +177,10 @@ function App() {
 				documentData,
 				format: state.outputFormat,
 				provider: settings.provider,
-				modelId: settings.openrouterModel,
+				modelId:
+					settings.provider === "google"
+						? settings.googleModel
+						: settings.openrouterModel,
 				apiKey:
 					settings.provider === "google"
 						? settings.googleApiKey
@@ -259,7 +265,10 @@ function App() {
 				mimeType: state.document.file.type,
 				schema,
 				provider: settings.provider,
-				modelId: settings.openrouterModel,
+				modelId:
+					settings.provider === "google"
+						? settings.googleModel
+						: settings.openrouterModel,
 				apiKey:
 					settings.provider === "google"
 						? settings.googleApiKey
@@ -281,7 +290,9 @@ function App() {
 	};
 
 	const isConfigured = Boolean(
-		(settings.provider === "google" && settings.googleApiKey) ||
+		(settings.provider === "google" &&
+			settings.googleApiKey &&
+			settings.googleModel) ||
 			(settings.provider === "openrouter" &&
 				settings.openrouterApiKey &&
 				settings.openrouterModel),

@@ -3,6 +3,7 @@ export interface AppSettings {
 	openrouterApiKey: string;
 	openrouterModel: string;
 	googleApiKey: string;
+	googleModel: string;
 	customPrompt: string;
 	pageRange: PageRange;
 }
@@ -17,4 +18,9 @@ export interface OpenRouterModel {
 	name: string;
 	inputModalities: string[];
 	pricing: { prompt: string; completion: string };
+}
+
+export interface GoogleModel {
+	id: string;
+	name: string;
 }

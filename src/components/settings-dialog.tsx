@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import { useGoogleModels } from "@/hooks/use-google-models";
 import { useOpenRouterModels } from "@/hooks/use-openrouter-models";
 import type { AppSettings } from "@/types/settings";
 
@@ -36,8 +37,12 @@ export function SettingsDialog({
 	const modelId = useId();
 	const customPromptId = useId();
 
-	const { models, loading, error } = useOpenRouterModels(
+	const { models: openrouterModels, loading: openrouterLoading, error: openrouterError } = useOpenRouterModels(
 		settings.provider === "openrouter" ? settings.openrouterApiKey : null,
+	);
+
+	const { models: googleModels, loading: googleLoading, error: googleError } = useGoogleModels(
+		settings.provider === "google" ? settings.googleApiKey : null,
 	);
 
 	const handleSave = () => {
@@ -82,21 +87,73 @@ export function SettingsDialog({
 					</div>
 
 					{settings.provider === "google" ? (
-						<div className="space-y-2">
-							<Label htmlFor={googleApiKeyId}>Google API Key</Label>
-							<Input
-								id={googleApiKeyId}
-								type="password"
-								value={settings.googleApiKey}
-								onChange={(e) =>
-									onSettingsChange({
-										...settings,
-										googleApiKey: e.target.value,
-									})
-								}
-								placeholder="Enter your Google AI API key"
-							/>
-						</div>
+						<>
+							<div className="space-y-2">
+								<Label htmlFor={googleApiKeyId}>Google API Key</Label>
+								<Input
+									id={googleApiKeyId}
+									type="password"
+									value={settings.googleApiKey}
+									onChange={(e) =>
+										onSettingsChange({
+											...settings,
+											googleApiKey: e.target.value,
+										})
+									}
+									placeholder="Enter your Google AI API key"
+								/>
+							</div>
+
+							<div className="space-y-2">
+								<Label htmlFor={modelId}>Model</Label>
+								{googleLoading ? (
+									<Combobox
+										options={[{ value: "loading", label: "Loading models..." }]}
+										value="loading"
+										disabled={true}
+										placeholder="Loading models..."
+									/>
+								) : googleError ? (
+									<Combobox
+										options={[{ value: "error", label: googleError }]}
+										value="error"
+										disabled={true}
+										placeholder={googleError}
+									/>
+								) : googleModels.length === 0 ? (
+									<Combobox
+										options={[{ value: "empty", label: "No models available" }]}
+										value="empty"
+										disabled={true}
+										placeholder="No models available"
+									/>
+								) : (
+									<Combobox
+										id={modelId}
+										options={googleModels.map((model) => ({
+											value: model.id,
+											label: model.name,
+										}))}
+										value={settings.googleModel}
+										onValueChange={(value) =>
+											onSettingsChange({
+												...settings,
+												googleModel: value,
+											})
+										}
+										disabled={!settings.googleApiKey || googleLoading}
+										placeholder="Select a model"
+										searchPlaceholder="Search models..."
+										emptyText="No models found."
+									/>
+								)}
+								{googleModels.length > 0 && (
+									<p className="text-muted-foreground text-xs">
+										{googleModels.length} models available
+									</p>
+								)}
+							</div>
+						</>
 					) : (
 						<>
 							<div className="space-y-2">
@@ -117,21 +174,21 @@ export function SettingsDialog({
 
 							<div className="space-y-2">
 								<Label htmlFor={modelId}>Model</Label>
-								{loading ? (
+								{openrouterLoading ? (
 									<Combobox
 										options={[{ value: "loading", label: "Loading models..." }]}
 										value="loading"
 										disabled={true}
 										placeholder="Loading models..."
 									/>
-								) : error ? (
+								) : openrouterError ? (
 									<Combobox
-										options={[{ value: "error", label: error }]}
+										options={[{ value: "error", label: openrouterError }]}
 										value="error"
 										disabled={true}
-										placeholder={error}
+										placeholder={openrouterError}
 									/>
-								) : models.length === 0 ? (
+								) : openrouterModels.length === 0 ? (
 									<Combobox
 										options={[{ value: "empty", label: "No models available" }]}
 										value="empty"
@@ -141,7 +198,7 @@ export function SettingsDialog({
 								) : (
 									<Combobox
 										id={modelId}
-										options={models.map((model) => ({
+										options={openrouterModels.map((model) => ({
 											value: model.id,
 											label: model.name,
 										}))}
@@ -152,15 +209,15 @@ export function SettingsDialog({
 												openrouterModel: value,
 											})
 										}
-										disabled={!settings.openrouterApiKey || loading}
+										disabled={!settings.openrouterApiKey || openrouterLoading}
 										placeholder="Select a model"
 										searchPlaceholder="Search models..."
 										emptyText="No models found."
 									/>
 								)}
-								{models.length > 0 && (
+								{openrouterModels.length > 0 && (
 									<p className="text-muted-foreground text-xs">
-										{models.length} image-capable models available
+										{openrouterModels.length} image-capable models available
 									</p>
 								)}
 							</div>

@@ -13,6 +13,7 @@ export const AppSettingsSchema = z.object({
 	openrouterApiKey: z.string(),
 	openrouterModel: z.string(),
 	googleApiKey: z.string(),
+	googleModel: z.string(),
 	customPrompt: z.string(),
 	pageRange: PageRangeSchema,
 	outputFormat: z.enum(["json", "csv"]),
@@ -23,6 +24,7 @@ export const defaultSettings: AppSettings = {
 	openrouterApiKey: "",
 	openrouterModel: "",
 	googleApiKey: "",
+	googleModel: "gemini-2.0-flash-exp",
 	customPrompt: "",
 	pageRange: {
 		start: 1,

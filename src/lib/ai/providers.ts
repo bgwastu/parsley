@@ -10,10 +10,13 @@ export interface ModelConfig {
 
 export function createModel(config: ModelConfig): LanguageModel {
 	if (config.provider === "google") {
+		if (!config.modelId) {
+			throw new Error("Model ID is required for Google provider");
+		}
 		const googleProvider = createGoogleGenerativeAI({
 			apiKey: config.apiKey,
 		});
-		return googleProvider("gemini-2.0-flash-exp");
+		return googleProvider(config.modelId);
 	}
 
 	if (!config.modelId) {
