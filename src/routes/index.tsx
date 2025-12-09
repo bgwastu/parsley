@@ -299,6 +299,12 @@ function App() {
 		}
 	};
 
+	const isConfigured =
+		(settings.provider === "google" && settings.googleApiKey) ||
+		(settings.provider === "openrouter" &&
+			settings.openrouterApiKey &&
+			settings.openrouterModel);
+
 	return (
 		<main className="container mx-auto p-6 w-full max-w-5xl">
 			<div className="mb-8">
@@ -312,14 +318,19 @@ function App() {
 							</p>
 						</div>
 					</div>
-					<Button
-						variant="outline"
-						size="sm"
-						onClick={() => actions.setSettingsOpen(true)}
-					>
-						<Settings className="h-4 w-4 mr-1" />
-						Settings
-					</Button>
+					<div className="relative">
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={() => actions.setSettingsOpen(true)}
+						>
+							<Settings className="h-4 w-4 mr-1" />
+							Settings
+						</Button>
+						{!isConfigured && (
+							<span className="absolute -top-1 -right-1 h-2.5 w-2.5 bg-red-500 rounded-full ring-2 ring-background" />
+						)}
+					</div>
 				</div>
 			</div>
 
@@ -345,12 +356,13 @@ function App() {
 					onGenerateSchema={handleGenerateSchema}
 					isGenerating={state.generation.isGeneratingSchema}
 					hasDocument={state.document.file !== null}
+					isConfigured={isConfigured}
 				/>
 
 				<GenerateButton
 					onClick={handleParse}
 					isLoading={state.generation.isParsing}
-					disabled={state.generation.isParsing}
+					disabled={state.generation.isParsing || !isConfigured}
 					hasDocument={state.document.file !== null}
 					hasSchema={state.schema !== null}
 				/>

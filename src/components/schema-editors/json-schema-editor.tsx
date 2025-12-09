@@ -20,6 +20,7 @@ interface JsonSchemaEditorProps {
 	onGenerateSchema: () => void;
 	isGenerating: boolean;
 	hasDocument: boolean;
+	isConfigured: boolean;
 }
 
 const templates: Record<string, JsonSchemaField[]> = {
@@ -52,6 +53,7 @@ export function JsonSchemaEditor({
 	onGenerateSchema,
 	isGenerating,
 	hasDocument,
+	isConfigured,
 }: JsonSchemaEditorProps) {
 	const jsonType = schema?.format === "json" ? schema.jsonType ?? "object" : "object";
 	const fields = schema?.format === "json" ? schema.fields : [];
@@ -171,7 +173,7 @@ export function JsonSchemaEditor({
 													onGenerateSchema();
 												}
 											}}
-											disabled={isGenerating}
+											disabled={isGenerating || !isConfigured}
 										>
 											<Sparkles className="h-4 w-4 mr-1" />
 											{isGenerating ? "Generating..." : "Generate with AI"}
@@ -332,7 +334,7 @@ export function JsonSchemaEditor({
 											onGenerateSchema();
 										}
 									}}
-									disabled={isGenerating}
+									disabled={isGenerating || !isConfigured}
 								>
 									<Sparkles className="h-4 w-4 mr-1" />
 									{isGenerating ? "Generating..." : "Generate with AI"}

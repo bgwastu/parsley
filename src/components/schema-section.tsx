@@ -11,6 +11,7 @@ interface SchemaSectionProps {
 	onGenerateSchema: () => void;
 	isGenerating: boolean;
 	hasDocument: boolean;
+	isConfigured: boolean;
 }
 
 export function SchemaSection({
@@ -20,6 +21,7 @@ export function SchemaSection({
 	onGenerateSchema,
 	isGenerating,
 	hasDocument,
+	isConfigured,
 }: SchemaSectionProps) {
 	return (
 		<div className="relative">
@@ -38,6 +40,7 @@ export function SchemaSection({
 						onGenerateSchema={onGenerateSchema}
 						isGenerating={isGenerating}
 						hasDocument={hasDocument}
+						isConfigured={isConfigured}
 					/>
 				)}
 				{format === "csv" && (
@@ -47,6 +50,7 @@ export function SchemaSection({
 						onGenerateSchema={onGenerateSchema}
 						isGenerating={isGenerating}
 						hasDocument={hasDocument}
+						isConfigured={isConfigured}
 					/>
 				)}
 			</div>

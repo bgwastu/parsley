@@ -19,6 +19,7 @@ interface CsvSchemaEditorProps {
 	onGenerateSchema: () => void;
 	isGenerating: boolean;
 	hasDocument: boolean;
+	isConfigured: boolean;
 }
 
 const templates: Record<string, CsvSchemaColumn[]> = {
@@ -52,6 +53,7 @@ export function CsvSchemaEditor({
 	onGenerateSchema,
 	isGenerating,
 	hasDocument,
+	isConfigured,
 }: CsvSchemaEditorProps) {
 	const columns = schema?.format === "csv" ? schema.columns : [];
 	const [expandedDescriptions, setExpandedDescriptions] = useState<Set<number>>(
@@ -136,7 +138,7 @@ export function CsvSchemaEditor({
 											onGenerateSchema();
 										}
 									}}
-									disabled={isGenerating}
+									disabled={isGenerating || !isConfigured}
 								>
 									<Sparkles className="h-4 w-4 mr-1" />
 									{isGenerating ? "Generating..." : "Generate with AI"}
