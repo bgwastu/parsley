@@ -229,7 +229,7 @@ export function SchemaSection({
 		const isArrayType = isJson && (item as JsonSchemaField).type === "array";
 
 		return (
-			<div key={index} className="space-y-2 pb-3 border-b last:border-b-0">
+			<div key={index} className="space-y-2">
 				<div className="flex items-end gap-2">
 					<div className="flex-1 space-y-1">
 						<Label htmlFor={`item-name-${index}`} className="text-xs">
@@ -317,7 +317,7 @@ export function SchemaSection({
 							<ChevronDown className="h-3 w-3 mr-1" />
 						)}
 						<span className="text-xs">
-							{expandedDescriptions.has(index) ? "Hide" : "Add"} Description
+							Description
 						</span>
 					</Button>
 				</div>
