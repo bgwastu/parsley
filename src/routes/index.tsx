@@ -21,7 +21,10 @@ import {
 } from "@/lib/client/file-utils";
 import { processPDF } from "@/lib/client/pdf";
 
-export const Route = createFileRoute("/")({ component: App });
+export const Route = createFileRoute("/")({
+	component: App,
+	ssr: false,
+});
 
 function App() {
 	const [settings, setSettings] = useSettings();
