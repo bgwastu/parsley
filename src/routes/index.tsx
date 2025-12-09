@@ -24,6 +24,42 @@ import { decryptPDF, validatePDFPassword } from "@/lib/client/pdf";
 export const Route = createFileRoute("/")({
 	component: App,
 	ssr: false,
+	head: () => ({
+		meta: [
+			{
+				property: "og:url",
+				content: "https://parsley.wastu.net",
+			},
+			{
+				property: "og:image",
+				content: "/og.jpg",
+			},
+			{
+				property: "og:title",
+				content: "Parsley",
+			},
+			{
+				property: "og:description",
+				content: "Turn any document into structured data, instantly",
+			},
+			{
+				name: "twitter:url",
+				content: "https://parsley.wastu.net",
+			},
+			{
+				name: "twitter:image",
+				content: "/og.jpg",
+			},
+			{
+				name: "twitter:title",
+				content: "Parsley",
+			},
+			{
+				name: "twitter:description",
+				content: "Turn any document into structured data, instantly",
+			},
+		],
+	}),
 });
 
 function App() {
@@ -307,7 +343,7 @@ function App() {
 						<div>
 							<h1 className="font-bold text-3xl">Parsley</h1>
 							<p className="text-muted-foreground">
-								Parse documents to structured data using AI
+								Turn any document into structured data, instantly
 							</p>
 						</div>
 					</div>
@@ -355,7 +391,11 @@ function App() {
 				<GenerateButton
 					onClick={handleParse}
 					isLoading={state.generation.isParsing}
-					disabled={state.generation.isParsing || !isConfigured || state.schemas[state.outputFormat] === null}
+					disabled={
+						state.generation.isParsing ||
+						!isConfigured ||
+						state.schemas[state.outputFormat] === null
+					}
 					hasDocument={state.document.file !== null}
 					hasSchema={state.schemas[state.outputFormat] !== null}
 				/>
