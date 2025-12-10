@@ -23,6 +23,7 @@ type AppAction =
 	| { type: "SET_ERROR"; payload: GenerationError }
 	| { type: "CLEAR_ERROR" }
 	| { type: "SET_SETTINGS_OPEN"; payload: boolean }
+	| { type: "SET_API_DIALOG_OPEN"; payload: boolean }
 	| {
 			type: "SHOW_PASSWORD_DIALOG";
 			payload: { resolve: (pwd: string) => void; reject: () => void };
@@ -166,6 +167,15 @@ function appReducer(state: AppState, action: AppAction): AppState {
 				},
 			};
 
+		case "SET_API_DIALOG_OPEN":
+			return {
+				...state,
+				ui: {
+					...state.ui,
+					apiDialogOpen: action.payload,
+				},
+			};
+
 		case "SHOW_PASSWORD_DIALOG":
 			return {
 				...state,
@@ -255,6 +265,7 @@ function createInitialState(settings: AppSettings): AppState {
 		ui: {
 			settingsOpen: false,
 			passwordDialog: null,
+			apiDialogOpen: false,
 		},
 		outputViewState: {
 			jsonPage: 1,
@@ -319,6 +330,10 @@ export function useAppState() {
 
 		setSettingsOpen: useCallback((open: boolean) => {
 			dispatch({ type: "SET_SETTINGS_OPEN", payload: open });
+		}, []),
+
+		setApiDialogOpen: useCallback((open: boolean) => {
+			dispatch({ type: "SET_API_DIALOG_OPEN", payload: open });
 		}, []),
 
 		showPasswordDialog: useCallback(

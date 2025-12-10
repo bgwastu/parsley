@@ -24,7 +24,7 @@ export function getSchemaGenerationPrompt(
 
 	switch (format) {
 		case "json": {
-			const jsonType = context?.jsonType ?? "object";
+			const jsonType = context?.jsonType ?? "array";
 
 			if (jsonType === "array") {
 				return `You are an expert at analyzing documents and creating data extraction schemas. Your goal is to identify REPEATING OBJECTS or ITEMS in the document that should be extracted as an array.${contextSection}

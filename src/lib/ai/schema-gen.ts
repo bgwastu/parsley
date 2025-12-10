@@ -104,7 +104,7 @@ export async function generateSchemaFromDocument({
 				: (result.object as { fields: JsonSchemaField[] });
 			return {
 				format: "json",
-				jsonType: "object",
+				jsonType: jsonType || "array",
 				fields: response.fields,
 			};
 		}

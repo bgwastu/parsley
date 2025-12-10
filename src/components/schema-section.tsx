@@ -103,8 +103,8 @@ export function SchemaSection({
 
 	const jsonType =
 		isJson && schema?.format === "json"
-			? (schema.jsonType ?? "object")
-			: "object";
+			? (schema.jsonType ?? "array")
+			: "array";
 	const items = isJson
 		? schema?.format === "json"
 			? schema.fields
@@ -161,7 +161,7 @@ export function SchemaSection({
 		if (isJson) {
 			onChange({
 				format: "json",
-				jsonType: "object",
+				jsonType: "array",
 				fields: jsonTemplates[templateName],
 			});
 		} else {

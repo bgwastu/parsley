@@ -22,6 +22,7 @@ export interface AppState {
 	ui: {
 		settingsOpen: boolean;
 		passwordDialog: PasswordDialogState | null;
+		apiDialogOpen: boolean;
 	};
 	outputViewState: {
 		jsonPage: number;

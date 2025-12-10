@@ -112,14 +112,21 @@ export async function parseDocument({
 	}
 
 	switch (schema.format) {
-		case "json":
+		case "json": {
+			let jsonData: object | unknown[];
+			if (schema.jsonType === "array") {
+				// Ensure we always return an array for jsonType === "array"
+				jsonData = Array.isArray(result.object)
+					? result.object
+					: [result.object];
+			} else {
+				jsonData = result.object as object;
+			}
 			return {
 				format: "json",
-				data:
-					schema.jsonType === "array"
-						? (result.object as unknown[])
-						: (result.object as object),
+				data: jsonData,
 			};
+		}
 		case "csv": {
 			const dataArray = result.object as object[];
 			const rows = jsonToCsvRows(dataArray);

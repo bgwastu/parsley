@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Settings } from "lucide-react";
+import { Code, Settings } from "lucide-react";
 import { useEffect } from "react";
 import { toast } from "sonner";
+import { ApiDialog } from "@/components/api-dialog";
 import { AppLogo } from "@/components/app-logo";
 import { DocumentUpload } from "@/components/document-upload";
 import { FormatSelector } from "@/components/format-selector";
@@ -347,18 +348,29 @@ function App() {
 							</p>
 						</div>
 					</div>
-					<div className="relative">
+					<div className="flex items-center gap-2">
 						<Button
 							variant="outline"
 							size="sm"
-							onClick={() => actions.setSettingsOpen(true)}
+							onClick={() => actions.setApiDialogOpen(true)}
 						>
-							<Settings className="h-4 w-4 mr-1" />
-							Settings
+							<Code className="h-4 w-4 mr-1" />
+							API
 						</Button>
-						{!isConfigured && (
-							<span className="absolute -top-1 -right-1 h-2.5 w-2.5 bg-red-500 rounded-full ring-2 ring-background" />
-						)}
+
+						<div className="relative">
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={() => actions.setSettingsOpen(true)}
+							>
+								<Settings className="h-4 w-4 mr-1" />
+								Settings
+							</Button>
+							{!isConfigured && (
+								<span className="absolute -top-1 -right-1 h-2.5 w-2.5 bg-red-500 rounded-full ring-2 ring-background" />
+							)}
+						</div>
 					</div>
 				</div>
 			</div>
@@ -418,6 +430,15 @@ function App() {
 				onOpenChange={actions.setSettingsOpen}
 				settings={settings}
 				onSettingsChange={setSettings}
+			/>
+
+			<ApiDialog
+				open={state.ui.apiDialogOpen}
+				onOpenChange={actions.setApiDialogOpen}
+				settings={state.settings}
+				document={state.document}
+				schema={state.schemas[state.outputFormat]}
+				outputFormat={state.outputFormat}
 			/>
 
 			<PasswordDialog
