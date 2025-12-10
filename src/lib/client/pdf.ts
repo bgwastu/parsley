@@ -1,33 +1,33 @@
 import { PDFDocument } from "@cantoo/pdf-lib";
-import * as pdfjsLib from "pdfjs-dist";
 import type { PageRange } from "@/types/settings";
 
-if (typeof window !== "undefined") {
-	pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-		"pdfjs-dist/build/pdf.worker.min.mjs",
-		import.meta.url,
-	).toString();
-}
-
+/**
+ * Validates if the provided password is correct for the given PDF using @cantoo/pdf-lib.
+ * Returns true if the password is valid, false if not.
+ * Throws on corruption, non-PDF, or unknown error.
+ */
 export async function validatePDFPassword(
 	arrayBuffer: ArrayBuffer,
 	password?: string,
 ): Promise<boolean> {
 	try {
-		const clonedBuffer = arrayBuffer.slice(0);
-		const loadingTask = pdfjsLib.getDocument({
-			data: clonedBuffer,
+		// @cantoo/pdf-lib will throw for wrong password or an unreadable document
+		await PDFDocument.load(arrayBuffer, {
 			password,
 		});
-		await loadingTask.promise;
 		return true;
 	} catch (error: unknown) {
-		if (error && typeof error === "object" && "name" in error) {
-			if (error.name === "PasswordException") {
-				return false;
-			}
+		if (
+			error &&
+			typeof error === "object" &&
+			"name" in error &&
+			(
+				error as { name?: string }
+			).name === "PasswordInvalidError"
+		) {
+			return false;
 		}
-		throw error;
+		return false;
 	}
 }
 
