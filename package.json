@@ -14,6 +14,7 @@
   "dependencies": {
     "@ai-sdk/google": "^2.0.44",
     "@ai-sdk/react": "^2.0.106",
+    "@arcjet/node": "^1.0.0-beta.15",
     "@cantoo/pdf-lib": "^2.5.3",
     "@hookform/resolvers": "^5.2.2",
     "@json2csv/plainjs": "^7.0.6",

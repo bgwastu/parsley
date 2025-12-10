@@ -156,7 +156,7 @@ export function ApiDialog({
 						<Code className="h-5 w-5" />
 						API Access
 					</DialogTitle>
-					<DialogDescription>
+					<DialogDescription className="text-left">
 						Use this endpoint to parse documents programmatically
 					</DialogDescription>
 				</DialogHeader>
@@ -200,7 +200,7 @@ export function ApiDialog({
 
 						<div className="space-y-2">
 							<Label>Request Parameters</Label>
-							<div className="border rounded-md overflow-hidden">
+							<div className="border rounded-md overflow-x-auto">
 								<table className="w-full text-xs">
 									<thead className="bg-muted">
 										<tr>
@@ -222,7 +222,7 @@ export function ApiDialog({
 												<span className="text-red-500">Yes</span>
 											</td>
 											<td className="p-2 text-muted-foreground">
-												AI provider: 'google' or 'openrouter'
+												AI provider: 'google' or 'openrouter' (demo not available for API)
 											</td>
 										</tr>
 										<tr>

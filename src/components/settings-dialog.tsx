@@ -30,6 +30,7 @@ export function SettingsDialog({
 	settings,
 	onSettingsChange,
 }: SettingsDialogProps) {
+	const demoId = useId();
 	const googleId = useId();
 	const openrouterId = useId();
 	const googleApiKeyId = useId();
@@ -67,10 +68,16 @@ export function SettingsDialog({
 							onValueChange={(value) =>
 								onSettingsChange({
 									...settings,
-									provider: value as "openrouter" | "google",
+									provider: value as "openrouter" | "google" | "demo",
 								})
 							}
 						>
+							<div className="flex items-center space-x-2">
+								<RadioGroupItem value="demo" id={demoId} />
+								<Label htmlFor={demoId} className="cursor-pointer">
+									Demo (Free, Rate Limited)
+								</Label>
+							</div>
 							<div className="flex items-center space-x-2">
 								<RadioGroupItem value="google" id={googleId} />
 								<Label htmlFor={googleId} className="cursor-pointer">
@@ -86,7 +93,15 @@ export function SettingsDialog({
 						</RadioGroup>
 					</div>
 
-					{settings.provider === "google" ? (
+					{settings.provider === "demo" ? (
+						<div className="rounded-lg border border-border bg-muted/50 p-3">
+							<p className="text-sm text-muted-foreground">
+								<strong className="text-foreground">Demo Mode:</strong>{" "}
+								Uses a shared API key with rate limiting (3 documents per day, 1MB file limit).
+								For unlimited access, use your own API key with Google or OpenRouter.
+							</p>
+						</div>
+					) : settings.provider === "google" ? (
 						<>
 							<div className="space-y-2">
 								<Label htmlFor={googleApiKeyId}>Google API Key</Label>

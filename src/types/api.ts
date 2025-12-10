@@ -25,9 +25,16 @@ const OpenRouterSettingsSchema = z.object({
 	pageRange: PageRangeSchema,
 });
 
+const DemoSettingsSchema = z.object({
+	provider: z.literal("demo"),
+	customPrompt: z.string().default(""),
+	pageRange: PageRangeSchema,
+});
+
 export const AppSettingsSchema = z.discriminatedUnion("provider", [
 	GoogleSettingsSchema,
 	OpenRouterSettingsSchema,
+	DemoSettingsSchema,
 ]);
 
 export const ApiOutputFormatSchema = z.enum(["json-object", "json-array", "csv"]);

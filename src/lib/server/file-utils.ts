@@ -1,4 +1,5 @@
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const MAX_FILE_SIZE_DEMO = 1 * 1024 * 1024;
 
 const ALLOWED_MIME_TYPES = [
 	"application/pdf",
@@ -24,6 +25,14 @@ export function validateFileSize(size: number): void {
 	if (size > MAX_FILE_SIZE) {
 		throw new Error(
 			`File size ${(size / 1024 / 1024).toFixed(2)}MB exceeds maximum allowed size of ${MAX_FILE_SIZE / 1024 / 1024}MB`,
+		);
+	}
+}
+
+export function validateFileSizeForDemo(size: number): void {
+	if (size > MAX_FILE_SIZE_DEMO) {
+		throw new Error(
+			`Demo provider file size limit is 1MB. Your file is ${(size / 1024 / 1024).toFixed(2)}MB. Please use a smaller file or switch to Google/OpenRouter provider.`,
 		);
 	}
 }

@@ -38,9 +38,17 @@ function escapeJsonForHttpie(json: string): string {
 
 function getApiKey(settings: AppSettings, includeApiKey: boolean): string {
 	if (!includeApiKey) {
-		return settings.provider === "google" ? "YOUR_GOOGLE_API_KEY" : "YOUR_OPENROUTER_API_KEY";
+		return settings.provider === "google"
+			? "YOUR_GOOGLE_API_KEY"
+			: settings.provider === "openrouter"
+				? "YOUR_OPENROUTER_API_KEY"
+				: "";
 	}
-	return settings.provider === "google" ? settings.googleApiKey : settings.openrouterApiKey;
+	return settings.provider === "google"
+		? settings.googleApiKey
+		: settings.provider === "openrouter"
+			? settings.openrouterApiKey
+			: "";
 }
 
 function getOrigin(): string {
@@ -55,10 +63,12 @@ export function generateCurlCommand(options: CommandOptions): string {
 
 	parts.push(`-F 'provider=${settings.provider}'`);
 
-	if (settings.provider === "google") {
+	if (settings.provider === "demo") {
+		// Demo doesn't send API key or model
+	} else if (settings.provider === "google") {
 		parts.push(`-F 'googleApiKey=${apiKey}'`);
 		parts.push(`-F 'googleModel=${settings.googleModel}'`);
-	} else {
+	} else if (settings.provider === "openrouter") {
 		parts.push(`-F 'openrouterApiKey=${apiKey}'`);
 		parts.push(`-F 'openrouterModel=${settings.openrouterModel}'`);
 	}
@@ -108,10 +118,12 @@ export function generateHttpieCommand(options: CommandOptions): string {
 
 	parts.push(`provider=${settings.provider}`);
 
-	if (settings.provider === "google") {
+	if (settings.provider === "demo") {
+		// Demo doesn't send API key or model
+	} else if (settings.provider === "google") {
 		parts.push(`googleApiKey=${apiKey}`);
 		parts.push(`googleModel=${settings.googleModel}`);
-	} else {
+	} else if (settings.provider === "openrouter") {
 		parts.push(`openrouterApiKey=${apiKey}`);
 		parts.push(`openrouterModel=${settings.openrouterModel}`);
 	}
@@ -163,10 +175,12 @@ export function generateN8nWorkflow(options: CommandOptions): string {
 		{ name: "outputFormat", value: apiOutputFormat },
 	];
 
-	if (settings.provider === "google") {
+	if (settings.provider === "demo") {
+		// Demo doesn't send API key or model
+	} else if (settings.provider === "google") {
 		parameters.push({ name: "googleApiKey", value: apiKey });
 		parameters.push({ name: "googleModel", value: settings.googleModel });
-	} else {
+	} else if (settings.provider === "openrouter") {
 		parameters.push({ name: "openrouterApiKey", value: apiKey });
 		parameters.push({ name: "openrouterModel", value: settings.openrouterModel });
 	}

@@ -3,7 +3,7 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import type { LanguageModel } from "ai";
 
 export interface ModelConfig {
-	provider: "openrouter" | "google";
+	provider: "openrouter" | "google" | "demo";
 	modelId?: string;
 	apiKey: string;
 }
@@ -17,6 +17,13 @@ export function createModel(config: ModelConfig): LanguageModel {
 			apiKey: config.apiKey,
 		});
 		return googleProvider(config.modelId);
+	}
+
+	if (config.provider === "demo") {
+		const openrouterProvider = createOpenRouter({
+			apiKey: config.apiKey,
+		});
+		return openrouterProvider("google/gemini-2.5-flash-lite");
 	}
 
 	if (!config.modelId) {

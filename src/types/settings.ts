@@ -1,11 +1,12 @@
 export interface AppSettings {
-	provider: "openrouter" | "google";
+	provider: "openrouter" | "google" | "demo";
 	openrouterApiKey: string;
 	openrouterModel: string;
 	googleApiKey: string;
 	googleModel: string;
 	customPrompt: string;
 	pageRange: PageRange;
+	outputFormat: "json" | "csv";
 }
 
 export interface PageRange {

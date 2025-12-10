@@ -69,6 +69,7 @@ function App() {
 
 	useEffect(() => {
 		const isConfigured =
+			settings.provider === "demo" ||
 			(settings.provider === "google" &&
 				settings.googleApiKey &&
 				settings.googleModel) ||
@@ -316,6 +317,14 @@ function App() {
 
 			actions.finishParsing(result);
 			toast.success("Document parsed successfully");
+
+			if (settings.provider === "demo") {
+				setTimeout(() => {
+					toast.info("Using demo mode? Get unlimited access with your own API key in Settings!", {
+						duration: 6000,
+					});
+				}, 1500);
+			}
 		} catch (err) {
 			const errorMessage =
 				err instanceof Error ? err.message : "Failed to parse document";
@@ -327,9 +336,10 @@ function App() {
 	};
 
 	const isConfigured = Boolean(
-		(settings.provider === "google" &&
-			settings.googleApiKey &&
-			settings.googleModel) ||
+		settings.provider === "demo" ||
+			(settings.provider === "google" &&
+				settings.googleApiKey &&
+				settings.googleModel) ||
 			(settings.provider === "openrouter" &&
 				settings.openrouterApiKey &&
 				settings.openrouterModel),
@@ -342,13 +352,20 @@ function App() {
 					<div className="flex items-center gap-3">
 						<AppLogo />
 						<div>
-							<h1 className="font-bold text-3xl">Parsley</h1>
-							<p className="text-muted-foreground">
+							<div className="flex items-center gap-2">
+								<h1 className="font-bold text-2xl md:text-3xl">Parsley</h1>
+								{settings.provider === "demo" && (
+									<span className="bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-medium px-2 py-0.5 rounded-full border border-blue-500/20">
+										Demo
+									</span>
+								)}
+							</div>
+							<p className="text-muted-foreground text-sm md:text-base">
 								Turn any document into structured data, instantly
 							</p>
 						</div>
 					</div>
-					<div className="flex items-center gap-2">
+					<div className="hidden md:flex items-center gap-2">
 						<Button
 							variant="outline"
 							size="sm"
@@ -423,6 +440,33 @@ function App() {
 						onCsvPageSizeChange={actions.setCsvPageSize}
 					/>
 				)}
+
+				<div className="flex md:hidden items-center gap-2 mt-4">
+					<Button
+						variant="outline"
+						size="sm"
+						onClick={() => actions.setApiDialogOpen(true)}
+						className="flex-1"
+					>
+						<Code className="h-4 w-4 mr-1" />
+						API
+					</Button>
+
+					<div className="relative flex-1">
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={() => actions.setSettingsOpen(true)}
+							className="w-full"
+						>
+							<Settings className="h-4 w-4 mr-1" />
+							Settings
+						</Button>
+						{!isConfigured && (
+							<span className="absolute -top-1 -right-1 h-2.5 w-2.5 bg-red-500 rounded-full ring-2 ring-background" />
+						)}
+					</div>
+				</div>
 			</div>
 
 			<SettingsDialog

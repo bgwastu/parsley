@@ -4,8 +4,16 @@ import { z } from "zod";
 import { parseDocument } from "@/lib/ai/parse";
 import { generateSchemaFromDocument } from "@/lib/ai/schema-gen";
 import {
+	aj,
+	demoRateLimit,
+	toArcjetRequest,
+	userProvidedRateLimit,
+} from "@/lib/server/arcjet";
+import { OPENROUTER_API_KEY } from "@/lib/server/env";
+import {
 	bufferToBase64DataUrl,
 	validateFileSize,
+	validateFileSizeForDemo,
 	validateFileType,
 } from "@/lib/server/file-utils";
 import { decryptPDFServer } from "@/lib/server/pdf";
@@ -94,6 +102,8 @@ function parseFormData(formData: FormData) {
 			customPrompt: customPrompt && typeof customPrompt === "string" ? customPrompt : "",
 			pageRange,
 		};
+	} else if (provider === "demo") {
+		throw new Error("Demo provider is not available for API usage. Please use 'google' or 'openrouter' with your own API key.");
 	} else {
 		throw new Error("Invalid provider. Must be 'google' or 'openrouter'");
 	}
@@ -146,7 +156,11 @@ async function handleParseRequest(
 		const mimeType = file.type || "application/octet-stream";
 		const filename = file.name || "document";
 
-		validateFileSize(fileBuffer.length);
+		if (settings.provider === "demo") {
+			validateFileSizeForDemo(fileBuffer.length);
+		} else {
+			validateFileSize(fileBuffer.length);
+		}
 		validateFileType(mimeType);
 
 		let documentData: string;
@@ -168,11 +182,15 @@ async function handleParseRequest(
 			modelId:
 				settings.provider === "google"
 					? settings.googleModel
-					: settings.openrouterModel,
+					: settings.provider === "openrouter"
+						? settings.openrouterModel
+						: undefined,
 			apiKey:
 				settings.provider === "google"
 					? settings.googleApiKey
-					: settings.openrouterApiKey,
+					: settings.provider === "openrouter"
+						? settings.openrouterApiKey
+						: OPENROUTER_API_KEY,
 		};
 
 		let finalSchema: SchemaDefinition;
@@ -242,9 +260,62 @@ export const Route = createFileRoute("/api/parse")({
 		handlers: {
 			POST: async ({ request }) => {
 				const formData = await request.formData();
+				const provider = formData.get("provider");
+
+				const decision = await aj
+					.withRule(
+						provider === "demo" ? demoRateLimit : userProvidedRateLimit,
+					)
+					.protect(toArcjetRequest(request));
+
+				if (decision.isDenied()) {
+					if (decision.reason.isRateLimit()) {
+						return json(
+							{
+								success: false,
+								error: {
+									message:
+										provider === "demo"
+											? "Rate limit exceeded. Demo provider allows 3 documents per day. Consider using your own API key for unlimited access."
+											: "Rate limit exceeded. Please try again later.",
+									type: "rate_limit_error",
+								},
+							},
+							{ status: 429 },
+						);
+					}
+
+					if (decision.reason.isBot()) {
+						return json(
+							{
+								success: false,
+								error: {
+									message: "Request blocked: automated client detected.",
+									type: "bot_detection_error",
+								},
+							},
+							{ status: 403 },
+						);
+					}
+
+					return json(
+						{
+							success: false,
+							error: {
+								message: "Request blocked by security rules.",
+								type: "security_error",
+							},
+						},
+						{ status: 403 },
+					);
+				}
+
 				const result = await handleParseRequest(formData);
-				// Check if result is an error response
-				const isError = result && typeof result === "object" && "success" in result && result.success === false;
+				const isError =
+					result &&
+					typeof result === "object" &&
+					"success" in result &&
+					result.success === false;
 				return json(result, {
 					status: isError ? 400 : 200,
 				});

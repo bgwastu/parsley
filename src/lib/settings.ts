@@ -9,7 +9,7 @@ const PageRangeSchema = z.object({
 });
 
 export const AppSettingsSchema = z.object({
-	provider: z.enum(["openrouter", "google"]),
+	provider: z.enum(["openrouter", "google", "demo"]),
 	openrouterApiKey: z.string(),
 	openrouterModel: z.string(),
 	googleApiKey: z.string(),
@@ -20,7 +20,7 @@ export const AppSettingsSchema = z.object({
 });
 
 export const defaultSettings: AppSettings = {
-	provider: "google",
+	provider: "demo",
 	openrouterApiKey: "",
 	openrouterModel: "",
 	googleApiKey: "",
@@ -77,8 +77,8 @@ export function validateSettings(settings: Partial<AppSettings>): {
 		if (error instanceof z.ZodError) {
 			return {
 				isValid: false,
-				errors: error.errors.map(
-					(err) => `${err.path.join(".")}: ${err.message}`,
+				errors: error.issues.map(
+					(err: z.ZodIssue) => `${err.path.join(".")}: ${err.message}`,
 				),
 			};
 		}
