@@ -11,6 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiParseRouteImport } from './routes/api/parse'
+import { Route as ApiDemoSchemaGenRouteImport } from './routes/api/demo-schema-gen'
+import { Route as ApiDemoParseRouteImport } from './routes/api/demo-parse'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,30 +24,53 @@ const ApiParseRoute = ApiParseRouteImport.update({
   path: '/api/parse',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiDemoSchemaGenRoute = ApiDemoSchemaGenRouteImport.update({
+  id: '/api/demo-schema-gen',
+  path: '/api/demo-schema-gen',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDemoParseRoute = ApiDemoParseRouteImport.update({
+  id: '/api/demo-parse',
+  path: '/api/demo-parse',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/demo-parse': typeof ApiDemoParseRoute
+  '/api/demo-schema-gen': typeof ApiDemoSchemaGenRoute
   '/api/parse': typeof ApiParseRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/demo-parse': typeof ApiDemoParseRoute
+  '/api/demo-schema-gen': typeof ApiDemoSchemaGenRoute
   '/api/parse': typeof ApiParseRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/demo-parse': typeof ApiDemoParseRoute
+  '/api/demo-schema-gen': typeof ApiDemoSchemaGenRoute
   '/api/parse': typeof ApiParseRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/parse'
+  fullPaths: '/' | '/api/demo-parse' | '/api/demo-schema-gen' | '/api/parse'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/parse'
-  id: '__root__' | '/' | '/api/parse'
+  to: '/' | '/api/demo-parse' | '/api/demo-schema-gen' | '/api/parse'
+  id:
+    | '__root__'
+    | '/'
+    | '/api/demo-parse'
+    | '/api/demo-schema-gen'
+    | '/api/parse'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiDemoParseRoute: typeof ApiDemoParseRoute
+  ApiDemoSchemaGenRoute: typeof ApiDemoSchemaGenRoute
   ApiParseRoute: typeof ApiParseRoute
 }
 
@@ -65,11 +90,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiParseRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/demo-schema-gen': {
+      id: '/api/demo-schema-gen'
+      path: '/api/demo-schema-gen'
+      fullPath: '/api/demo-schema-gen'
+      preLoaderRoute: typeof ApiDemoSchemaGenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/demo-parse': {
+      id: '/api/demo-parse'
+      path: '/api/demo-parse'
+      fullPath: '/api/demo-parse'
+      preLoaderRoute: typeof ApiDemoParseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiDemoParseRoute: ApiDemoParseRoute,
+  ApiDemoSchemaGenRoute: ApiDemoSchemaGenRoute,
   ApiParseRoute: ApiParseRoute,
 }
 export const routeTree = rootRouteImport

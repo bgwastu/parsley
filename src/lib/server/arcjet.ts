@@ -2,15 +2,26 @@
 // ABOUTME: Provides rate limiting and bot protection for API routes
 
 import arcjet, { shield, tokenBucket } from "@arcjet/node";
-import { ARCJET_KEY } from "./env";
+import { ARCJET_KEY, isDevelopment } from "./env";
 
-export const aj = arcjet({
-	key: ARCJET_KEY,
-	characteristics: ["ip.src"],
-	rules: [shield({ mode: "LIVE" })],
+export const isArcjetEnabled = !isDevelopment && !!ARCJET_KEY;
+
+export const aj = isArcjetEnabled
+	? arcjet({
+			key: ARCJET_KEY!,
+			characteristics: ["ip.src"],
+			rules: [shield({ mode: "LIVE" })],
+		})
+	: null;
+
+export const demoSchemaGenRateLimit = tokenBucket({
+	mode: "LIVE",
+	refillRate: 10,
+	interval: "24h",
+	capacity: 10,
 });
 
-export const demoRateLimit = tokenBucket({
+export const demoParseRateLimit = tokenBucket({
 	mode: "LIVE",
 	refillRate: 3,
 	interval: "24h",
@@ -36,4 +47,21 @@ export function toArcjetRequest(request: Request) {
 		path: new URL(request.url).pathname,
 		headers: Object.fromEntries(request.headers.entries()),
 	};
+}
+
+export async function protectWithArcjet(
+	request: Request,
+	rateLimit: ReturnType<typeof tokenBucket>,
+) {
+	if (!isArcjetEnabled || !aj) {
+		return {
+			isDenied: () => false,
+			reason: {
+				isRateLimit: () => false,
+				isBot: () => false,
+			},
+		};
+	}
+
+	return aj.withRule(rateLimit).protect(toArcjetRequest(request), { requested: 1 });
 }

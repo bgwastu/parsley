@@ -170,6 +170,36 @@ function App() {
 		}
 	};
 
+	const callDemoSchemaGen = async (formData: FormData): Promise<unknown> => {
+		const response = await fetch("/api/demo-schema-gen", {
+			method: "POST",
+			body: formData,
+		});
+
+		if (!response.ok) {
+			const error = await response.json();
+			throw new Error(
+				error.error?.message || "Demo schema generation failed",
+			);
+		}
+
+		return response.json();
+	};
+
+	const callDemoParse = async (formData: FormData): Promise<unknown> => {
+		const response = await fetch("/api/demo-parse", {
+			method: "POST",
+			body: formData,
+		});
+
+		if (!response.ok) {
+			const error = await response.json();
+			throw new Error(error.error?.message || "Demo parsing failed");
+		}
+
+		return response.json();
+	};
+
 	const handleGenerateSchema = async () => {
 		if (!state.document.file) {
 			toast.error("Please upload a document first");
@@ -179,46 +209,82 @@ function App() {
 		actions.startSchemaGeneration();
 
 		try {
-			let documentData: string | string[];
-
-			if (
-				state.document.file.type === "application/pdf" &&
-				state.document.password
-			) {
-				// Password-protected PDF: decrypt it first
-				const arrayBuffer = await readFileAsArrayBuffer(state.document.file);
-				documentData = await decryptPDF(
-					arrayBuffer,
-					state.document.password,
-					state.document.pageRange,
-				);
-			} else {
-				// Non-password PDF or image: send raw file data
-				documentData = await readFileAsBase64(state.document.file);
-			}
-
 			const currentSchema = state.schemas[state.outputFormat];
 			const currentJsonType =
 				state.outputFormat === "json" && currentSchema?.format === "json"
 					? currentSchema.jsonType
 					: undefined;
 
-			const generatedSchema = await generateSchemaFromDocument({
-				documentData,
-				format: state.outputFormat,
-				provider: settings.provider,
-				modelId:
-					settings.provider === "google"
-						? settings.googleModel
-						: settings.openrouterModel,
-				apiKey:
-					settings.provider === "google"
-						? settings.googleApiKey
-						: settings.openrouterApiKey,
-				filename: state.document.file.name,
-				mimeType: state.document.file.type,
-				jsonType: currentJsonType,
-			});
+			let generatedSchema;
+
+			if (settings.provider === "demo") {
+				const formData = new FormData();
+				formData.append("file", state.document.file);
+				formData.append(
+					"outputFormat",
+					state.outputFormat === "json"
+						? currentJsonType === "array"
+							? "json-array"
+							: "json-object"
+						: "csv",
+				);
+
+				if (state.document.password) {
+					formData.append("pdfPassword", state.document.password);
+				}
+
+				if (state.document.pageRange) {
+					formData.append(
+						"pageRangeStart",
+						state.document.pageRange.start.toString(),
+					);
+					if (state.document.pageRange.end) {
+						formData.append(
+							"pageRangeEnd",
+							state.document.pageRange.end.toString(),
+						);
+					}
+				}
+
+				generatedSchema = await callDemoSchemaGen(formData);
+			} else {
+				let documentData: string | string[];
+
+				if (
+					state.document.file.type === "application/pdf" &&
+					state.document.password
+				) {
+					// Password-protected PDF: decrypt it first
+					const arrayBuffer = await readFileAsArrayBuffer(
+						state.document.file,
+					);
+					documentData = await decryptPDF(
+						arrayBuffer,
+						state.document.password,
+						state.document.pageRange,
+					);
+				} else {
+					// Non-password PDF or image: send raw file data
+					documentData = await readFileAsBase64(state.document.file);
+				}
+
+				generatedSchema = await generateSchemaFromDocument({
+					documentData,
+					format: state.outputFormat,
+					provider: settings.provider,
+					modelId:
+						settings.provider === "google"
+							? settings.googleModel
+							: settings.openrouterModel,
+					apiKey:
+						settings.provider === "google"
+							? settings.googleApiKey
+							: settings.openrouterApiKey,
+					filename: state.document.file.name,
+					mimeType: state.document.file.type,
+					jsonType: currentJsonType,
+				});
+			}
 
 			// Preserve jsonType if currently in array mode
 			const finalSchema =
@@ -272,40 +338,81 @@ function App() {
 		actions.startParsing();
 
 		try {
-			let documentData: string | string[];
+			let result;
 
-			if (
-				state.document.file.type === "application/pdf" &&
-				state.document.password
-			) {
-				// Password-protected PDF: decrypt it first
-				const arrayBuffer = await readFileAsArrayBuffer(state.document.file);
-				documentData = await decryptPDF(
-					arrayBuffer,
-					state.document.password,
-					state.document.pageRange,
+			if (settings.provider === "demo") {
+				const formData = new FormData();
+				formData.append("file", state.document.file);
+				formData.append(
+					"outputFormat",
+					state.outputFormat === "json"
+						? schema.format === "json" && schema.jsonType === "array"
+							? "json-array"
+							: "json-object"
+						: "csv",
 				);
-			} else {
-				// Non-password PDF or image: send raw file data
-				documentData = await readFileAsBase64(state.document.file);
-			}
+				formData.append("schema", JSON.stringify(schema));
 
-			const result = await parseDocument({
-				documentData,
-				mimeType: state.document.file.type,
-				schema,
-				provider: settings.provider,
-				modelId:
-					settings.provider === "google"
-						? settings.googleModel
-						: settings.openrouterModel,
-				apiKey:
-					settings.provider === "google"
-						? settings.googleApiKey
-						: settings.openrouterApiKey,
-				customPrompt: settings.customPrompt,
-				filename: state.document.file.name,
-			});
+				if (state.document.password) {
+					formData.append("pdfPassword", state.document.password);
+				}
+
+				if (state.document.pageRange) {
+					formData.append(
+						"pageRangeStart",
+						state.document.pageRange.start.toString(),
+					);
+					if (state.document.pageRange.end) {
+						formData.append(
+							"pageRangeEnd",
+							state.document.pageRange.end.toString(),
+						);
+					}
+				}
+
+				if (settings.customPrompt) {
+					formData.append("customPrompt", settings.customPrompt);
+				}
+
+				result = await callDemoParse(formData);
+			} else {
+				let documentData: string | string[];
+
+				if (
+					state.document.file.type === "application/pdf" &&
+					state.document.password
+				) {
+					// Password-protected PDF: decrypt it first
+					const arrayBuffer = await readFileAsArrayBuffer(
+						state.document.file,
+					);
+					documentData = await decryptPDF(
+						arrayBuffer,
+						state.document.password,
+						state.document.pageRange,
+					);
+				} else {
+					// Non-password PDF or image: send raw file data
+					documentData = await readFileAsBase64(state.document.file);
+				}
+
+				result = await parseDocument({
+					documentData,
+					mimeType: state.document.file.type,
+					schema,
+					provider: settings.provider,
+					modelId:
+						settings.provider === "google"
+							? settings.googleModel
+							: settings.openrouterModel,
+					apiKey:
+						settings.provider === "google"
+							? settings.googleApiKey
+							: settings.openrouterApiKey,
+					customPrompt: settings.customPrompt,
+					filename: state.document.file.name,
+				});
+			}
 
 			actions.finishParsing(result);
 			toast.success("Document parsed successfully");
