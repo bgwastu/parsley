@@ -440,7 +440,7 @@ function App() {
 							<div className="flex items-center gap-2">
 								<h1 className="font-bold text-2xl md:text-3xl">Parsley</h1>
 								{settings.provider === "demo" && (
-									<span className="bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-medium px-2 py-0.5 rounded-full border border-blue-500/20">
+									<span className="bg-primary/10 text-primary font-medium text-xs px-2 py-0.5 rounded-full border border-primary/20">
 										Demo
 									</span>
 								)}
