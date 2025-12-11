@@ -5,7 +5,6 @@ import { parseDocument } from "@/lib/ai/parse";
 import { generateSchemaFromDocument } from "@/lib/ai/schema-gen";
 import {
 	aj,
-	demoRateLimit,
 	toArcjetRequest,
 	userProvidedRateLimit,
 } from "@/lib/server/arcjet";
@@ -13,7 +12,6 @@ import { OPENROUTER_API_KEY } from "@/lib/server/env";
 import {
 	bufferToBase64DataUrl,
 	validateFileSize,
-	validateFileSizeForDemo,
 	validateFileType,
 } from "@/lib/server/file-utils";
 import { decryptPDFServer } from "@/lib/server/pdf";
@@ -156,11 +154,7 @@ async function handleParseRequest(
 		const mimeType = file.type || "application/octet-stream";
 		const filename = file.name || "document";
 
-		if (settings.provider === "demo") {
-			validateFileSizeForDemo(fileBuffer.length);
-		} else {
-			validateFileSize(fileBuffer.length);
-		}
+		validateFileSize(fileBuffer.length);
 		validateFileType(mimeType);
 
 		let documentData: string;
@@ -260,13 +254,10 @@ export const Route = createFileRoute("/api/parse")({
 		handlers: {
 			POST: async ({ request }) => {
 				const formData = await request.formData();
-				const provider = formData.get("provider");
 
 				const decision = await aj
-					.withRule(
-						provider === "demo" ? demoRateLimit : userProvidedRateLimit,
-					)
-					.protect(toArcjetRequest(request));
+					.withRule(userProvidedRateLimit)
+					.protect(toArcjetRequest(request), { requested: 1 });
 
 				if (decision.isDenied()) {
 					if (decision.reason.isRateLimit()) {
@@ -274,10 +265,7 @@ export const Route = createFileRoute("/api/parse")({
 							{
 								success: false,
 								error: {
-									message:
-										provider === "demo"
-											? "Rate limit exceeded. Demo provider allows 3 documents per day. Consider using your own API key for unlimited access."
-											: "Rate limit exceeded. Please try again later.",
+									message: "Rate limit exceeded. Please try again later.",
 									type: "rate_limit_error",
 								},
 							},

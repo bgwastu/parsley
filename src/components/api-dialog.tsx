@@ -33,30 +33,6 @@ interface ApiDialogProps {
 	outputFormat: OutputFormat;
 }
 
-function ParamDoc({
-	name,
-	type,
-	required,
-	description,
-}: {
-	name: string;
-	type: string;
-	required?: boolean;
-	description: string;
-}) {
-	return (
-		<div className="flex gap-2 text-xs">
-			<code className="font-mono text-blue-600 dark:text-blue-400">
-				{name}
-			</code>
-			<span className="text-muted-foreground">
-				({type})
-				{required && <span className="text-red-500 ml-1">*</span>}
-			</span>
-			<span className="text-muted-foreground">- {description}</span>
-		</div>
-	);
-}
 
 function CodeBlockWithCopy({
 	code,
@@ -119,7 +95,7 @@ function CodeBlockWithCopy({
 				</pre>
 			) : (
 				<div
-					className="[&_pre]:p-3 [&_pre]:pr-12 [&_pre]:text-xs [&_pre]:overflow-x-auto [&_pre]:whitespace-pre-wrap [&_pre]:break-all [&_pre]:!bg-background dark:[&_.shiki]:!text-[var(--shiki-dark)] dark:[&_.shiki]:!bg-[var(--shiki-dark-bg)] dark:[&_.shiki_span]:!text-[var(--shiki-dark)]"
+					className="[&_pre]:p-3 [&_pre]:pr-12 [&_pre]:text-xs [&_pre]:overflow-x-auto [&_pre]:whitespace-pre-wrap [&_pre]:break-all [&_pre]:bg-background! dark:[&_.shiki]:text-(--shiki-dark)! dark:[&_.shiki]:bg-(--shiki-dark-bg)!:[&_.shiki_span]:!text-[var(--shiki-dark)]"
 					// biome-ignore lint/security/noDangerouslySetInnerHtml: This is a valid use case for this component
 					dangerouslySetInnerHTML={{ __html: highlightedCode }}
 				/>

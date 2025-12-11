@@ -22,6 +22,17 @@ import {
 } from "@/lib/client/file-utils";
 import { decryptPDF, validatePDFPassword } from "@/lib/client/pdf";
 
+function isSettingsConfigured(settings: ReturnType<typeof useSettings>[0]): boolean {
+	if (settings.provider === "demo") return true;
+	if (settings.provider === "google") {
+		return Boolean(settings.googleApiKey && settings.googleModel);
+	}
+	if (settings.provider === "openrouter") {
+		return Boolean(settings.openrouterApiKey && settings.openrouterModel);
+	}
+	return false;
+}
+
 export const Route = createFileRoute("/")({
 	component: App,
 	ssr: false,
@@ -68,30 +79,11 @@ function App() {
 	const { state, actions } = useAppState();
 
 	useEffect(() => {
-		const isConfigured =
-			settings.provider === "demo" ||
-			(settings.provider === "google" &&
-				settings.googleApiKey &&
-				settings.googleModel) ||
-			(settings.provider === "openrouter" &&
-				settings.openrouterApiKey &&
-				settings.openrouterModel);
-
-		if (!isConfigured) {
+		if (!isSettingsConfigured(settings)) {
 			actions.setSettingsOpen(true);
 		}
-	}, [
-		settings.provider,
-		settings.googleApiKey,
-		settings.googleModel,
-		settings.openrouterApiKey,
-		settings.openrouterModel,
-		actions.setSettingsOpen,
-	]);
-
-	useEffect(() => {
 		actions.setSettings(settings);
-	}, [settings, actions.setSettings]);
+	}, [settings, actions.setSettingsOpen, actions.setSettings]);
 
 	// Show Sonner toast when errors are set in state
 	useEffect(() => {
@@ -335,15 +327,7 @@ function App() {
 		}
 	};
 
-	const isConfigured = Boolean(
-		settings.provider === "demo" ||
-			(settings.provider === "google" &&
-				settings.googleApiKey &&
-				settings.googleModel) ||
-			(settings.provider === "openrouter" &&
-				settings.openrouterApiKey &&
-				settings.openrouterModel),
-	);
+	const isConfigured = isSettingsConfigured(settings);
 
 	return (
 		<main className="container mx-auto p-6 w-full max-w-3xl">

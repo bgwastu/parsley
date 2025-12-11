@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { AppSettings } from "@/types/settings";
 
 const STORAGE_KEY = "parsley-settings";
+const SETTINGS_SAVED_FLAG_KEY = "parsley-settings-saved";
 
 const PageRangeSchema = z.object({
 	start: z.number().min(1),
@@ -20,7 +21,7 @@ export const AppSettingsSchema = z.object({
 });
 
 export const defaultSettings: AppSettings = {
-	provider: "demo",
+	provider: "google",
 	openrouterApiKey: "",
 	openrouterModel: "",
 	googleApiKey: "",
@@ -61,9 +62,28 @@ export function saveSettings(settings: AppSettings): void {
 	try {
 		const validated = AppSettingsSchema.parse(settings);
 		localStorage.setItem(STORAGE_KEY, JSON.stringify(validated));
+		// Mark that settings have been explicitly saved
+		localStorage.setItem(SETTINGS_SAVED_FLAG_KEY, "true");
 	} catch (error) {
 		console.error("Failed to save settings:", error);
 	}
+}
+
+export function hasSettingsBeenSaved(): boolean {
+	if (typeof window === "undefined") {
+		return false;
+	}
+
+	return localStorage.getItem(SETTINGS_SAVED_FLAG_KEY) === "true";
+}
+
+export function isFirstTimeUser(): boolean {
+	if (typeof window === "undefined") {
+		return false;
+	}
+
+	const stored = localStorage.getItem(STORAGE_KEY);
+	return !stored;
 }
 
 export function validateSettings(settings: Partial<AppSettings>): {

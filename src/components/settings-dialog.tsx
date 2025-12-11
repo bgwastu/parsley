@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { useEffect, useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Combobox } from "@/components/ui/combobox";
 import {
@@ -30,6 +30,7 @@ export function SettingsDialog({
 	settings,
 	onSettingsChange,
 }: SettingsDialogProps) {
+	const [localSettings, setLocalSettings] = useState<AppSettings>(settings);
 	const demoId = useId();
 	const googleId = useId();
 	const openrouterId = useId();
@@ -38,17 +39,34 @@ export function SettingsDialog({
 	const modelId = useId();
 	const customPromptId = useId();
 
+	// Reset local settings when dialog opens or when settings prop changes
+	useEffect(() => {
+		if (open) {
+			setLocalSettings(settings);
+		}
+	}, [open, settings]);
+
 	const { models: openrouterModels, loading: openrouterLoading, error: openrouterError } = useOpenRouterModels(
-		settings.provider === "openrouter" ? settings.openrouterApiKey : null,
+		localSettings.provider === "openrouter" ? localSettings.openrouterApiKey : null,
 	);
 
 	const { models: googleModels, loading: googleLoading, error: googleError } = useGoogleModels(
-		settings.provider === "google" ? settings.googleApiKey : null,
+		localSettings.provider === "google" ? localSettings.googleApiKey : null,
 	);
 
 	const handleSave = () => {
+		onSettingsChange(localSettings);
 		onOpenChange(false);
 	};
+
+	const isDemo = localSettings.provider === "demo";
+	const isGoogle = localSettings.provider === "google";
+	const isOpenRouter = localSettings.provider === "openrouter";
+
+	const hasGoogleCredentials = Boolean(localSettings.googleApiKey && localSettings.googleModel);
+	const hasOpenRouterCredentials = Boolean(localSettings.openrouterApiKey && localSettings.openrouterModel);
+
+	const canSave = isDemo || (isGoogle && hasGoogleCredentials) || (isOpenRouter && hasOpenRouterCredentials);
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
@@ -64,10 +82,10 @@ export function SettingsDialog({
 					<div className="space-y-3">
 						<Label>AI Provider</Label>
 						<RadioGroup
-							value={settings.provider}
+							value={localSettings.provider}
 							onValueChange={(value) =>
-								onSettingsChange({
-									...settings,
+								setLocalSettings({
+									...localSettings,
 									provider: value as "openrouter" | "google" | "demo",
 								})
 							}
@@ -93,7 +111,7 @@ export function SettingsDialog({
 						</RadioGroup>
 					</div>
 
-					{settings.provider === "demo" ? (
+					{localSettings.provider === "demo" ? (
 						<div className="rounded-lg border border-border bg-muted/50 p-3">
 							<p className="text-sm text-muted-foreground">
 								<strong className="text-foreground">Demo Mode:</strong>{" "}
@@ -101,17 +119,17 @@ export function SettingsDialog({
 								For unlimited access, use your own API key with Google or OpenRouter.
 							</p>
 						</div>
-					) : settings.provider === "google" ? (
+					) : localSettings.provider === "google" ? (
 						<>
 							<div className="space-y-2">
 								<Label htmlFor={googleApiKeyId}>Google API Key</Label>
 								<Input
 									id={googleApiKeyId}
 									type="password"
-									value={settings.googleApiKey}
+									value={localSettings.googleApiKey}
 									onChange={(e) =>
-										onSettingsChange({
-											...settings,
+										setLocalSettings({
+											...localSettings,
 											googleApiKey: e.target.value,
 										})
 									}
@@ -149,14 +167,14 @@ export function SettingsDialog({
 											value: model.id,
 											label: model.name,
 										}))}
-										value={settings.googleModel}
+										value={localSettings.googleModel}
 										onValueChange={(value) =>
-											onSettingsChange({
-												...settings,
+											setLocalSettings({
+												...localSettings,
 												googleModel: value,
 											})
 										}
-										disabled={!settings.googleApiKey || googleLoading}
+										disabled={!localSettings.googleApiKey || googleLoading}
 										placeholder="Select a model"
 										searchPlaceholder="Search models..."
 										emptyText="No models found."
@@ -176,10 +194,10 @@ export function SettingsDialog({
 								<Input
 									id={openrouterApiKeyId}
 									type="password"
-									value={settings.openrouterApiKey}
+									value={localSettings.openrouterApiKey}
 									onChange={(e) =>
-										onSettingsChange({
-											...settings,
+										setLocalSettings({
+											...localSettings,
 											openrouterApiKey: e.target.value,
 										})
 									}
@@ -217,14 +235,14 @@ export function SettingsDialog({
 											value: model.id,
 											label: model.name,
 										}))}
-										value={settings.openrouterModel}
+										value={localSettings.openrouterModel}
 										onValueChange={(value) =>
-											onSettingsChange({
-												...settings,
+											setLocalSettings({
+												...localSettings,
 												openrouterModel: value,
 											})
 										}
-										disabled={!settings.openrouterApiKey || openrouterLoading}
+										disabled={!localSettings.openrouterApiKey || openrouterLoading}
 										placeholder="Select a model"
 										searchPlaceholder="Search models..."
 										emptyText="No models found."
@@ -260,10 +278,10 @@ export function SettingsDialog({
 						<Label htmlFor={customPromptId}>Custom Prompt (Optional)</Label>
 						<Textarea
 							id={customPromptId}
-							value={settings.customPrompt}
+							value={localSettings.customPrompt}
 							onChange={(e) =>
-								onSettingsChange({
-									...settings,
+								setLocalSettings({
+									...localSettings,
 									customPrompt: e.target.value,
 								})
 							}
@@ -274,7 +292,7 @@ export function SettingsDialog({
 				</div>
 
 				<DialogFooter>
-					<Button onClick={handleSave}>Save Settings</Button>
+					<Button onClick={handleSave} disabled={!canSave}>Save Settings</Button>
 				</DialogFooter>
 			</DialogContent>
 		</Dialog>
