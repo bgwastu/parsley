@@ -8,7 +8,7 @@ import {
 	type SortingState,
 	useReactTable,
 } from "@tanstack/react-table";
-import { ArrowUpDown, Download } from "lucide-react";
+import { ArrowUpDown, Check, Copy, Download } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,6 +53,7 @@ export function CsvTableOutput({
 }: CsvTableOutputProps) {
 	const [sorting, setSorting] = useState<SortingState>([]);
 	const [globalFilter, setGlobalFilter] = useState("");
+	const [copied, setCopied] = useState(false);
 
 	const columns = useMemo<ColumnDef<Record<string, unknown>>[]>(() => {
 		if (data.length === 0) return [];
@@ -100,6 +101,13 @@ export function CsvTableOutput({
 		table.setPageSize(pageSize);
 	}, [currentPage, pageSize, table]);
 
+	const handleCopy = async () => {
+		const csv = jsonToCsv(data);
+		await navigator.clipboard.writeText(csv);
+		setCopied(true);
+		setTimeout(() => setCopied(false), 2000);
+	};
+
 	const handleDownload = () => {
 		const csv = jsonToCsv(data);
 		const blob = new Blob([csv], { type: "text/csv" });
@@ -133,10 +141,25 @@ export function CsvTableOutput({
 					onChange={(e) => setGlobalFilter(e.target.value)}
 					className="max-w-sm"
 				/>
-				<Button variant="outline" size="sm" onClick={handleDownload}>
-					<Download className="h-4 w-4 mr-1" />
-					Export CSV
-				</Button>
+				<div className="flex gap-2">
+					<Button variant="outline" size="sm" onClick={handleCopy}>
+						{copied ? (
+							<>
+								<Check className="h-4 w-4 mr-1" />
+								Copied
+							</>
+						) : (
+							<>
+								<Copy className="h-4 w-4 mr-1" />
+								Copy all
+							</>
+						)}
+					</Button>
+					<Button variant="outline" size="sm" onClick={handleDownload}>
+						<Download className="h-4 w-4 mr-1" />
+						Export CSV
+					</Button>
+				</div>
 			</div>
 
 			<div className="rounded-md border w-full overflow-auto max-h-[600px]">

@@ -21,6 +21,8 @@ import {
 	readFileAsBase64,
 } from "@/lib/client/file-utils";
 import { decryptPDF, validatePDFPassword } from "@/lib/client/pdf";
+import type { GenerationOutput } from "@/types/app-state";
+import type { SchemaDefinition } from "@/types/output";
 
 function isSettingsConfigured(settings: ReturnType<typeof useSettings>[0]): boolean {
 	if (settings.provider === "demo") return true;
@@ -170,7 +172,7 @@ function App() {
 		}
 	};
 
-	const callDemoSchemaGen = async (formData: FormData): Promise<unknown> => {
+	const callDemoSchemaGen = async (formData: FormData): Promise<SchemaDefinition> => {
 		const response = await fetch("/api/demo-schema-gen", {
 			method: "POST",
 			body: formData,
@@ -186,7 +188,7 @@ function App() {
 		return response.json();
 	};
 
-	const callDemoParse = async (formData: FormData): Promise<unknown> => {
+	const callDemoParse = async (formData: FormData): Promise<GenerationOutput> => {
 		const response = await fetch("/api/demo-parse", {
 			method: "POST",
 			body: formData,
@@ -213,9 +215,9 @@ function App() {
 			const currentJsonType =
 				state.outputFormat === "json" && currentSchema?.format === "json"
 					? currentSchema.jsonType
-					: undefined;
+					: "array";
 
-			let generatedSchema;
+			let generatedSchema: SchemaDefinition;
 
 			if (settings.provider === "demo") {
 				const formData = new FormData();
@@ -286,15 +288,7 @@ function App() {
 				});
 			}
 
-			// Preserve jsonType if currently in array mode
-			const finalSchema =
-				generatedSchema.format === "json" &&
-				currentSchema?.format === "json" &&
-				currentSchema.jsonType === "array"
-					? { ...generatedSchema, jsonType: "array" as const }
-					: generatedSchema;
-
-			actions.finishSchemaGeneration(finalSchema);
+			actions.finishSchemaGeneration(generatedSchema);
 			const fieldCount =
 				generatedSchema.format === "json"
 					? generatedSchema.fields.length
@@ -338,7 +332,7 @@ function App() {
 		actions.startParsing();
 
 		try {
-			let result;
+			let result: GenerationOutput;
 
 			if (settings.provider === "demo") {
 				const formData = new FormData();
