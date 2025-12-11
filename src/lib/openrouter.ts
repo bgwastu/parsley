@@ -79,5 +79,9 @@ export async function fetchModels(apiKey: string): Promise<OpenRouterModel[]> {
 export function createOpenRouterProvider(apiKey: string) {
 	return createOpenRouter({
 		apiKey,
+		headers: {
+			"HTTP-Referer": "https://parsley.wastu.net",
+			"X-Title": "Parsley - Document Parser",
+		},
 	});
 }

@@ -22,6 +22,10 @@ export function createModel(config: ModelConfig): LanguageModel {
 	if (config.provider === "demo") {
 		const openrouterProvider = createOpenRouter({
 			apiKey: config.apiKey,
+			headers: {
+				"HTTP-Referer": "https://parsley.wastu.net",
+				"X-Title": "Parsley - Document Parser",
+			},
 		});
 		return openrouterProvider("google/gemini-2.5-flash-lite");
 	}
@@ -32,6 +36,10 @@ export function createModel(config: ModelConfig): LanguageModel {
 
 	const openrouterProvider = createOpenRouter({
 		apiKey: config.apiKey,
+		headers: {
+			"HTTP-Referer": "https://parsley.wastu.net",
+			"X-Title": "Parsley - Document Parser",
+		},
 	});
 	return openrouterProvider(config.modelId);
 }
